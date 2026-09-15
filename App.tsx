@@ -2,8 +2,8 @@ import { StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import './global.css';
 import { createStaticNavigation } from '@react-navigation/native';
-import HomeScreen from './components/screens/HomeScreen';
-import LoginScreen from './components/screens/LoginScreen';
+import HomeScreen from './src/screens/Home/HomeScreen';
+import LoginScreen from './src/screens/Login/LoginScreen';
 
 export default function App() {
   return <Navigation />;
