@@ -9,9 +9,6 @@ export default function LoginScreen() {
   const navigation = useNavigation();
 
   function handleEntrar() {
-    // Por enquanto sem backend: leva direto pra área logada (Tab).
-    // Quando a API estiver pronta, aqui entra a validação de e-mail/senha
-    // e a decisão de ir para a home de Paciente ou de Clínica.
     navigation.navigate('Main' as never);
   }
 
@@ -59,12 +56,11 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={handleEntrar}
-        className="h-14 items-center justify-center rounded-xl bg-blue-500"
-      >
+       className="h-14 items-center justify-center rounded-xl bg-blue-500"
+       >
         <Text className="text-base font-bold text-white">Entrar</Text>
       </TouchableOpacity>
-      
+
       {/* CRIAR CONTA — separado do login */}
       <View className="border-t border-gray-200 pt-6">
         <Text className="mb-3 text-center text-sm font-semibold text-gray-600">
