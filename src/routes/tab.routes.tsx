@@ -1,9 +1,9 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
 import HomeScreen from '../screens/Home/HomeScreen';
-import Consultas from '../screens/Consultas/ConsultasScreen';
-import Favoritos from '../screens/Favoritos/FavoritosScreen';
-import Perfil from '../screens/Perfil/PerfilScreen';
+import Consultas from '../screens/Paciente/Consultas/ConsultasScreen';
+import Favoritos from '../screens/Paciente/Favoritos/FavoritosScreen';
+import Perfil from '../screens/Paciente/Perfil/PerfilScreen';
 
 const Tab = createBottomTabNavigator();
 

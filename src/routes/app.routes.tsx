@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/Home/HomeScreen';
 import LoginScreen from '../screens/Login/LoginScreen';
-import CadastroPacienteScreen from '../screens/CadastroPaciente/CadastroPacienteScreen';
-import CadastroClinicaScreen from '../screens/CadastroClinica/CadastroClinicaScreen';
+import CadastroPacienteScreen from '../screens/Paciente/Cadastro/CadastroPacienteScreen';
+import CadastroClinicaScreen from '../screens/Clinica/Cadastro/CadastroClinicaScreen';
 import TabRoutes from './tab.routes';
 
 const Stack = createNativeStackNavigator();
