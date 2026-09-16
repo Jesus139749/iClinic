@@ -24,7 +24,7 @@ export default function LoginScreen() {
 
       {/* LOGIN */}
       <TextInputStyled
-        label='Nome da clínica'
+        label='E-mail'
         value={email}
         onChangeText={setEmail}
         placeholder='seuemail@exemplo.com'
