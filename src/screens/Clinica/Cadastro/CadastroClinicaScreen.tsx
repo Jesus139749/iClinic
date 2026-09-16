@@ -108,7 +108,7 @@ export default function CadastroClinicaScreen() {
 
         <View className='flex-row flex-1 justify-center gap-1'>
           <Text className="mt-1 mb-5 text-sm font-semibold text-gray-400">
-            Não tem uma conta?
+            Já tem uma conta?
           </Text>
           <Pressable onPress={() => navigation.navigate('Login' as never)}>
             <Text className="mt-1 mb-5 text-sm font-semibold text-blue-500">
