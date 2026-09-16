@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TextInputStyled } from '../../../components/TextInputStyled';
 
 export default function CadastroClinicaScreen() {
   const navigation = useNavigation();
@@ -12,6 +13,11 @@ export default function CadastroClinicaScreen() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const onSubmit = () => {
+    console.log(name);
+  }
 
 
   return (
@@ -23,113 +29,78 @@ export default function CadastroClinicaScreen() {
 
         <Text className='color-slate-400'>Preencha os dados abaixo para cadastrar sua clínica na plataforma iClinic.</Text>
 
-        <Text className="mb-2 text-sm font-semibold text-gray-600 mt-8">
-          Nome da clínica
-        </Text>
-
-        <TextInput
-          className="mb-5 rounded-xl border border-gray-200 bg-white px-4 text-base"
-          placeholder="Ex: Clínica São Lucas"
-          placeholderTextColor="#A0A8B4"
+        <TextInputStyled
+          label='Nome da clínica'
           value={name}
           onChangeText={setName}
-          autoCapitalize="words"
+          placeholder='Ex: Clínica São Lucas'
+          autoCapitalize='words'
         />
 
-        <Text className="mb-2 text-sm font-semibold text-gray-600">
-          CNPJ
-        </Text>
-        <TextInput
-          className="mb-5 h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-          placeholder="XX.XXX.XXX/XXXX-XX"
-          placeholderTextColor="#A0A8B4"
+        <TextInputStyled
+          label='CNPJ'
           value={cnpj}
           onChangeText={setCnpj}
-          keyboardType="email-address"
-          autoCapitalize="none"
+          placeholder='XX.XXX.XXX/XXXX-XX'
         />
 
-        <Text className="mb-2 text-sm font-semibold text-gray-600">
-          E-mail institucional
-        </Text>
-        <TextInput
-          className="h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-          placeholder="contato@clinica.com.br"
-          placeholderTextColor="#A0A8B4"
+        <TextInputStyled
+          label='E-mail institucional'
           value={email}
           onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
+          placeholder='contato@clinica.com.br'
+          keyboardType='email-address'
+          autoCapitalize='none'
         />
 
-        <Text className="mt-1 mb-5 text-sm font-semibold text-gray-400">
+        <Text className="mt-1 mb-3 text-sm font-semibold text-gray-400">
           Usaremos para login e recuperação de senha
         </Text>
 
-        <Text className="mb-2 text-sm font-semibold text-gray-600">
-          Telefone comercial
-        </Text>
-        <TextInput
-          className="mb-5 h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-          placeholder="(DD) XXXX-XXXX"
-          placeholderTextColor="#A0A8B4"
+        <TextInputStyled
+          label='Telefone comercial'
           value={phone}
           onChangeText={setPhone}
-          keyboardType="email-address"
-          autoCapitalize="none"
+          placeholder='(DD) XXXX-XXXX'
+          keyboardType='email-address'
         />
 
-        <Text className="mb-2 text-sm font-semibold text-gray-600">
-          Endereço completo
-        </Text>
-        <TextInput
-          className="mb-5 h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-          placeholder="Rua, número, bairro, cidade – UF"
-          placeholderTextColor="#A0A8B4"
+        <TextInputStyled
+          label='Endereço completo'
           value={address}
           onChangeText={setAddress}
-          keyboardType="email-address"
-          autoCapitalize="none"
+          placeholder='Rua, número, bairro, cidade – UF'
+          keyboardType='email-address'
         />
 
-        <Text className="mb-2 text-sm font-semibold text-gray-600">
-          Senha
-        </Text>
-        <TextInput
-          className="h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-          placeholder="Mínimo 8 caracteres"
-          placeholderTextColor="#A0A8B4"
+        <TextInputStyled
+          label='Senha'
           value={password}
           onChangeText={setPassword}
-          keyboardType="email-address"
-          autoCapitalize="none"
+          placeholder='Mínimo 8 caracteres'
+          secureTextEntry
         />
 
-        <Text className="mt-1 mb-5 text-sm font-semibold text-gray-400">
+        <Text className="mt-1 mb-3 text-sm font-semibold text-gray-400">
           Use letras, números e caracteres especiais
         </Text>
 
-        <Text className="mb-2 text-sm font-semibold text-gray-600">
-          Confirmar senha
-        </Text>
-        <TextInput
-          className="mb-5 h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-          placeholder="Repita sua senha"
-          placeholderTextColor="#A0A8B4"
-          value={''}
-          onChangeText={() => { }}
-          keyboardType="email-address"
-          autoCapitalize="none"
+        <TextInputStyled
+          label='Confirmar senha'
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          placeholder='Repita sua senha'
+          secureTextEntry
         />
 
-        <Text className="mt-1 mb-5 text-sm font-semibold text-gray-400">
+        <Text className="my-5 text-sm font-semibold text-gray-400">
           Ao cadastrar sua clínica, você concorda com os Termos de Uso e a Política de Privacidade da iClinic.
         </Text>
 
         <Pressable
           className='bg-blue-400 p-5 rounded-xl mt-2 mb-4'
           onPress={() =>
-            navigation.navigate('Login')
+            onSubmit()
           }
         >
           <Text className='text-center color-white font-bold'>Cadastrar clínica</Text>

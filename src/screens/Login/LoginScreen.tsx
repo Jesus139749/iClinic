@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { TextInputStyled } from '../../components/TextInputStyled';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -22,30 +23,20 @@ export default function LoginScreen() {
       </View>
 
       {/* LOGIN */}
-      <Text className="mb-2 text-sm font-semibold text-gray-600">
-        E-mail ou telefone
-      </Text>
-
-      <TextInput
-        className="mb-5 h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-        placeholder="seuemail@exemplo.com"
-        placeholderTextColor="#A0A8B4"
+      <TextInputStyled
+        label='Nome da clínica'
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
+        placeholder='seuemail@exemplo.com'
+        autoCapitalize='none'
       />
 
-      <Text className="mb-2 text-sm font-semibold text-gray-600">
-        Senha
-      </Text>
-
-      <TextInput
-        className="h-14 rounded-xl border border-gray-200 bg-white px-4 text-base"
-        placeholder="Digite sua senha"
-        placeholderTextColor="#A0A8B4"
+      <TextInputStyled
+        label='Senha'
         value={senha}
         onChangeText={setSenha}
+        placeholder='Digite sua senha'
+        autoCapitalize='none'
         secureTextEntry
       />
 
@@ -56,8 +47,8 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-       className="h-14 items-center justify-center rounded-xl bg-blue-500"
-       >
+        className="h-14 items-center justify-center rounded-xl bg-blue-500"
+      >
         <Text className="text-base font-bold text-white">Entrar</Text>
       </TouchableOpacity>
 
