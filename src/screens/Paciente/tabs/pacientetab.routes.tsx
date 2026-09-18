@@ -6,7 +6,7 @@ import Perfil from '../Perfil/PerfilScreen';
 
 const Tab = createBottomTabNavigator();
 
-export default function TabRoutes() {
+export default function PacienteTabRoutes() {
     return (
         <Tab.Navigator screenOptions={{ headerShown: false }}>
             <Tab.Screen

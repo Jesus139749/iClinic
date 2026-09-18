@@ -3,9 +3,11 @@ import HomeScreen from '../screens/Home/HomeScreen';
 import LoginScreen from '../screens/Login/LoginScreen';
 import CadastroPacienteScreen from '../screens/Paciente/Cadastro/CadastroPacienteScreen';
 import CadastroClinicaScreen from '../screens/Clinica/Cadastro/CadastroClinicaScreen';
-import TabRoutes from '../screens/Paciente/Tab/tab.routes';
+import TabRoutes from '../screens/Paciente/tabs/pacientetab.routes';
 import { Header } from '../components/Header';
 import DashboardClinicaScreen from '../screens/Clinica/Dashboard/DashboardClinicaScreen';
+import ClinicaTabRoutes from '../screens/Clinica/tabs/clinicatab.routes';
+import PacienteTabRoutes from '../screens/Paciente/tabs/pacientetab.routes';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,9 +30,10 @@ export default function AppRoutes() {
           headerShown: true,
           header: () => <Header />
         }} />
+
       <Stack.Screen
         name="DashboardClinica"
-        component={DashboardClinicaScreen}
+        component={ClinicaTabRoutes}
         options={{
           headerShown: true,
           header: () => <Header />
@@ -38,12 +41,11 @@ export default function AppRoutes() {
 
         <Stack.Screen
         name="DashboardPaciente"
-          component={TabRoutes}
+          component={PacienteTabRoutes}
         options={{
           headerShown: true,
           header: () => <Header />,
-        }}
-      />
+        }} />
 
       <Stack.Screen name="Main" component={TabRoutes} />
     </Stack.Navigator>
