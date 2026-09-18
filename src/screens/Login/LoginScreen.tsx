@@ -16,13 +16,13 @@ export default function LoginScreen() {
   return (
     <View className="flex-1 justify-center bg-slate-50 px-8">
 
-      {/* Logo */}
+     
       <View className="mb-10 items-center">
         <Text className="text-4xl font-bold text-blue-500">iClinic</Text>
         <Text className="mt-1 text-sm text-gray-400">Saúde ao seu alcance</Text>
       </View>
 
-      {/* LOGIN */}
+      
       <TextInputStyled
         label='E-mail'
         value={email}
@@ -53,7 +53,7 @@ export default function LoginScreen() {
         <Text className="text-base font-bold text-white">Entrar</Text>
       </TouchableOpacity>
 
-      {/* CRIAR CONTA — separado do login */}
+      
       <View className="border-t border-gray-200 pt-6">
         <Text className="mb-3 text-center text-sm font-semibold text-gray-600">
           Não tem uma conta? Cadastre-se como:
