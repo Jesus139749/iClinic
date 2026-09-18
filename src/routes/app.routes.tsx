@@ -3,7 +3,7 @@ import HomeScreen from '../screens/Home/HomeScreen';
 import LoginScreen from '../screens/Login/LoginScreen';
 import CadastroPacienteScreen from '../screens/Paciente/Cadastro/CadastroPacienteScreen';
 import CadastroClinicaScreen from '../screens/Clinica/Cadastro/CadastroClinicaScreen';
-import TabRoutes from './tab.routes';
+import TabRoutes from '../screens/Paciente/Tab/tab.routes';
 import { Header } from '../components/Header';
 import DashboardClinicaScreen from '../screens/Clinica/Dashboard/DashboardClinicaScreen';
 
@@ -35,6 +35,16 @@ export default function AppRoutes() {
           headerShown: true,
           header: () => <Header />
         }} />
+
+        <Stack.Screen
+        name="DashboardPaciente"
+          component={TabRoutes}
+        options={{
+          headerShown: true,
+          header: () => <Header />,
+        }}
+      />
+
       <Stack.Screen name="Main" component={TabRoutes} />
     </Stack.Navigator>
   );
