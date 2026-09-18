@@ -15,8 +15,60 @@ export default function CadastroClinicaScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const [errors, setErrors] = useState<Record<string, string[]>>({
+    name: [],
+    cnpj: [],
+    email: [],
+    phone: [],
+    address: [],
+    password: [],
+    confirmPassword: [],
+  });
+
   const onSubmit = () => {
-    console.log(name);
+    const newErrors: Record<string, string[]> = {
+      name: [],
+      cnpj: [],
+      email: [],
+      phone: [],
+      address: [],
+      password: [],
+      confirmPassword: [],
+    }
+
+    if (!name.trim())
+      newErrors.name.push('Nome é obrigatório');
+
+    if (!cnpj.trim())
+      newErrors.cnpj.push('CNPJ é obrigatório');
+
+    if (cnpj.trim().length != 14)
+      newErrors.cnpj.push('CNPJ deve conter 14 caracteres');
+
+    if (!email.trim())
+      newErrors.email.push('E-mail é obrigatório');
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      newErrors.email.push('E-mail deve ser válido');
+
+    if (!phone.trim())
+      newErrors.phone.push('Telefone é obrigatório');
+
+    if (!address.trim())
+      newErrors.address.push('Endereço é obrigatório');
+
+    if (!password.trim())
+      newErrors.password.push('Senha é obrigatória');
+
+    if (confirmPassword.trim() != password.trim())
+      newErrors.confirmPassword.push('As senhas não conferem');
+
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).some((fieldErrors) => fieldErrors.length > 0))
+      return;
+
+    console.log('Válido');
   }
 
 
@@ -32,6 +84,7 @@ export default function CadastroClinicaScreen() {
         <TextInputStyled
           label='Nome da clínica'
           value={name}
+          error={errors.name}
           onChangeText={setName}
           placeholder='Ex: Clínica São Lucas'
           autoCapitalize='words'
@@ -40,26 +93,26 @@ export default function CadastroClinicaScreen() {
         <TextInputStyled
           label='CNPJ'
           value={cnpj}
+          error={errors.cnpj}
           onChangeText={setCnpj}
           placeholder='XX.XXX.XXX/XXXX-XX'
         />
 
         <TextInputStyled
           label='E-mail institucional'
+          subText='Usaremos para login e recuperação de senha'
           value={email}
+          error={errors.email}
           onChangeText={setEmail}
           placeholder='contato@clinica.com.br'
           keyboardType='email-address'
           autoCapitalize='none'
         />
 
-        <Text className="mt-1 mb-3 text-sm font-semibold text-gray-400">
-          Usaremos para login e recuperação de senha
-        </Text>
-
         <TextInputStyled
           label='Telefone comercial'
           value={phone}
+          error={errors.phone}
           onChangeText={setPhone}
           placeholder='(DD) XXXX-XXXX'
           keyboardType='email-address'
@@ -68,6 +121,7 @@ export default function CadastroClinicaScreen() {
         <TextInputStyled
           label='Endereço completo'
           value={address}
+          error={errors.address}
           onChangeText={setAddress}
           placeholder='Rua, número, bairro, cidade – UF'
           keyboardType='email-address'
@@ -75,19 +129,18 @@ export default function CadastroClinicaScreen() {
 
         <TextInputStyled
           label='Senha'
+          subText='Use letras, números e caracteres especiais'
           value={password}
+          error={errors.password}
           onChangeText={setPassword}
           placeholder='Mínimo 8 caracteres'
           secureTextEntry
         />
 
-        <Text className="mt-1 mb-3 text-sm font-semibold text-gray-400">
-          Use letras, números e caracteres especiais
-        </Text>
-
         <TextInputStyled
           label='Confirmar senha'
           value={confirmPassword}
+          error={errors.confirmPassword}
           onChangeText={setConfirmPassword}
           placeholder='Repita sua senha'
           secureTextEntry

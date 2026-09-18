@@ -2,6 +2,8 @@ import { Text, TextInput, TextInputProps, View } from "react-native"
 
 interface InputProps extends TextInputProps {
     label?: string;
+    subText?: string;
+    error?: string[];
 }
 
 export const TextInputStyled = (props: InputProps) => {
@@ -16,6 +18,18 @@ export const TextInputStyled = (props: InputProps) => {
                 placeholderTextColor="#A0A8B4"
                 {...props}
             />
+
+            {props.subText && (
+                <Text className="mt-1 mb-3 text-sm font-semibold text-gray-400">
+                    {props.subText}
+                </Text>
+            )}
+
+            {props.error?.map(error => (
+                <Text className="text-sm text-red-400">
+                    {error}
+                </Text>
+            ))}
         </View>
     )
 }
