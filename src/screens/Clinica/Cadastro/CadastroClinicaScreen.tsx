@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInputStyled } from '../../../components/TextInputStyled';
+import { Masks } from 'react-native-mask-input';
 
 export default function CadastroClinicaScreen() {
   const navigation = useNavigation();
@@ -42,7 +43,7 @@ export default function CadastroClinicaScreen() {
     if (!cnpj.trim())
       newErrors.cnpj.push('CNPJ é obrigatório');
 
-    if (cnpj.trim().length != 14)
+    if (cnpj.length < 14)
       newErrors.cnpj.push('CNPJ deve conter 14 caracteres');
 
     if (!email.trim())
@@ -53,6 +54,9 @@ export default function CadastroClinicaScreen() {
 
     if (!phone.trim())
       newErrors.phone.push('Telefone é obrigatório');
+
+    if (phone.length < 11)
+      newErrors.phone.push('Telefone deve conter 11 dígitos');
 
     if (!address.trim())
       newErrors.address.push('Endereço é obrigatório');
@@ -68,7 +72,15 @@ export default function CadastroClinicaScreen() {
     if (Object.values(newErrors).some((fieldErrors) => fieldErrors.length > 0))
       return;
 
-    console.log('Válido');
+    console.log({
+      name,
+      cnpj,
+      email,
+      phone,
+      address,
+      password,
+      confirmPassword
+    });
   }
 
 
@@ -84,7 +96,7 @@ export default function CadastroClinicaScreen() {
         <TextInputStyled
           label='Nome da clínica'
           value={name}
-          error={errors.name}
+          errors={errors.name}
           onChangeText={setName}
           placeholder='Ex: Clínica São Lucas'
           autoCapitalize='words'
@@ -93,8 +105,12 @@ export default function CadastroClinicaScreen() {
         <TextInputStyled
           label='CNPJ'
           value={cnpj}
-          error={errors.cnpj}
-          onChangeText={setCnpj}
+          mask={Masks.BRL_CNPJ}
+          errors={errors.cnpj}
+          onChangeText={(_masked, unmasked) => {
+            setCnpj(unmasked);
+          }}
+          keyboardType='numeric'
           placeholder='XX.XXX.XXX/XXXX-XX'
         />
 
@@ -102,7 +118,7 @@ export default function CadastroClinicaScreen() {
           label='E-mail institucional'
           subText='Usaremos para login e recuperação de senha'
           value={email}
-          error={errors.email}
+          errors={errors.email}
           onChangeText={setEmail}
           placeholder='contato@clinica.com.br'
           keyboardType='email-address'
@@ -112,26 +128,28 @@ export default function CadastroClinicaScreen() {
         <TextInputStyled
           label='Telefone comercial'
           value={phone}
-          error={errors.phone}
-          onChangeText={setPhone}
+          errors={errors.phone}
+          mask={Masks.BRL_PHONE}
+          onChangeText={(_masked, unmasked) => {
+            setPhone(unmasked);
+          }}
           placeholder='(DD) XXXX-XXXX'
-          keyboardType='email-address'
+          keyboardType='phone-pad'
         />
 
         <TextInputStyled
           label='Endereço completo'
           value={address}
-          error={errors.address}
+          errors={errors.address}
           onChangeText={setAddress}
           placeholder='Rua, número, bairro, cidade – UF'
-          keyboardType='email-address'
         />
 
         <TextInputStyled
           label='Senha'
           subText='Use letras, números e caracteres especiais'
           value={password}
-          error={errors.password}
+          errors={errors.password}
           onChangeText={setPassword}
           placeholder='Mínimo 8 caracteres'
           secureTextEntry
@@ -140,7 +158,7 @@ export default function CadastroClinicaScreen() {
         <TextInputStyled
           label='Confirmar senha'
           value={confirmPassword}
-          error={errors.confirmPassword}
+          errors={errors.confirmPassword}
           onChangeText={setConfirmPassword}
           placeholder='Repita sua senha'
           secureTextEntry

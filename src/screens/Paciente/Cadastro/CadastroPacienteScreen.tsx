@@ -3,6 +3,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {TextInputStyled} from '../../../components/TextInputStyled';
 import {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import { Masks } from 'react-native-mask-input';
 
 export default function CadastroPacienteScreen() {
 
@@ -16,7 +17,7 @@ export default function CadastroPacienteScreen() {
 
   const onSubmit = () => {
     console.log(name);
-    
+    console.log(phone);
   };
 
   return (
@@ -46,7 +47,10 @@ export default function CadastroPacienteScreen() {
         <TextInputStyled
           label='Telefone'
           value={phone}
-          onChangeText={setPhone}
+          onChangeText={(_masked, unmasked) => {
+            setPhone(unmasked);
+          }}
+          mask={Masks.BRL_PHONE}
           placeholder='(DD) XXXX-XXXX'
           autoCapitalize='none'
           keyboardType='phone-pad'

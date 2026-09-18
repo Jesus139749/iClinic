@@ -1,9 +1,13 @@
 import { Text, TextInput, TextInputProps, View } from "react-native"
+import MaskInput, { Mask } from "react-native-mask-input";
 
-interface InputProps extends TextInputProps {
+interface InputProps extends Omit<TextInputProps, "onChangeText"> {
     label?: string;
     subText?: string;
-    error?: string[];
+    errors?: string[];
+    mask?: Mask;
+
+    onChangeText?: (masked: string, unmasked: string) => void;
 }
 
 export const TextInputStyled = (props: InputProps) => {
@@ -13,10 +17,11 @@ export const TextInputStyled = (props: InputProps) => {
                 {props.label}
             </Text>
 
-            <TextInput
+            <MaskInput
+                {...props}
+                mask={props.mask}
                 className="rounded-xl border border-gray-200 bg-white px-4 text-base"
                 placeholderTextColor="#A0A8B4"
-                {...props}
             />
 
             {props.subText && (
@@ -25,8 +30,8 @@ export const TextInputStyled = (props: InputProps) => {
                 </Text>
             )}
 
-            {props.error?.map(error => (
-                <Text className="text-sm text-red-400">
+            {props.errors?.map(error => (
+                <Text key={error} className="text-sm text-red-400">
                     {error}
                 </Text>
             ))}
