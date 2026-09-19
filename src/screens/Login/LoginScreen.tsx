@@ -47,7 +47,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('DashboardPaciente' as never)}
+        onPress={() => navigation.navigate('DashboardClinica' as never)}
         className="h-14 items-center justify-center rounded-xl bg-blue-500"
       >
         <Text className="text-base font-bold text-white">Entrar</Text>

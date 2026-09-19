@@ -3,9 +3,7 @@ import HomeScreen from '../screens/Home/HomeScreen';
 import LoginScreen from '../screens/Login/LoginScreen';
 import CadastroPacienteScreen from '../screens/Paciente/Cadastro/CadastroPacienteScreen';
 import CadastroClinicaScreen from '../screens/Clinica/Cadastro/CadastroClinicaScreen';
-import TabRoutes from '../screens/Paciente/tabs/pacientetab.routes';
 import { Header } from '../components/Header';
-import DashboardClinicaScreen from '../screens/Clinica/Dashboard/DashboardClinicaScreen';
 import ClinicaTabRoutes from '../screens/Clinica/tabs/clinicatab.routes';
 import PacienteTabRoutes from '../screens/Paciente/tabs/pacientetab.routes';
 
@@ -14,8 +12,11 @@ const Stack = createNativeStackNavigator();
 export default function AppRoutes() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+
       <Stack.Screen name="Home" component={HomeScreen} />
+
       <Stack.Screen name="Login" component={LoginScreen} />
+
       <Stack.Screen
         name="CadastroPaciente"
         component={CadastroPacienteScreen}
@@ -23,6 +24,7 @@ export default function AppRoutes() {
           headerShown: true,
           header: () => <Header />
         }} />
+
       <Stack.Screen
         name="CadastroClinica"
         component={CadastroClinicaScreen}
@@ -32,22 +34,20 @@ export default function AppRoutes() {
         }} />
 
       <Stack.Screen
+        name="DashboardPaciente"
+        component={PacienteTabRoutes}
+        options={{
+          headerShown: true,
+          header: () => <Header />,
+        }} />
+
+      <Stack.Screen
         name="DashboardClinica"
         component={ClinicaTabRoutes}
         options={{
           headerShown: true,
           header: () => <Header />
         }} />
-
-        <Stack.Screen
-        name="DashboardPaciente"
-          component={PacienteTabRoutes}
-        options={{
-          headerShown: true,
-          header: () => <Header />,
-        }} />
-
-      <Stack.Screen name="Main" component={TabRoutes} />
     </Stack.Navigator>
   );
 }

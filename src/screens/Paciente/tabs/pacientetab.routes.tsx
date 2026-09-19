@@ -1,8 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardPacienteScreen from '../Dashboard/DashboardPacienteScreen';
-import Consultas from '../Consultas/ConsultasScreen';
-import Favoritos from '../Favoritos/FavoritosScreen';
-import Perfil from '../Perfil/PerfilScreen';
+import ConsultasScreen from '../Consultas/ConsultasScreen';
+import FavoritosScreen from '../Favoritos/FavoritosScreen';
+import PerfilScreen from '../Perfil/PerfilScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -16,17 +16,17 @@ export default function PacienteTabRoutes() {
 
             <Tab.Screen
                 name="Consultas"
-                component={Consultas}
+                component={ConsultasScreen}
             />
 
             <Tab.Screen
                 name="Favoritos"
-                component={Favoritos}
+                component={FavoritosScreen}
             />
 
             <Tab.Screen
                 name="Perfil"
-                component={Perfil}
+                component={PerfilScreen}
             />
         </Tab.Navigator>
     );
