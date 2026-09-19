@@ -42,9 +42,9 @@ export default function DashboardClinicaScreen() {
                 Atalhos rápidos
             </Text>
 
-            <DashboardShortcutCard icon="person" title="Médicos e Especialidades" text="Gerenciar equipe médica" color="#16a34a" />
-            <DashboardShortcutCard icon="calendar" title="Agenda e Horários" text="Configurar disponibilidade" color="#8b5cf6" />
-            <DashboardShortcutCard icon="calendar" title="Consultas agendadas" text="Acompanhar agendamentos" color="#2563eb" />
+            <DashboardShortcutCard navigationScreen="Médicos" icon="person" title="Médicos e Especialidades" text="Gerenciar equipe médica" color="#16a34a" />
+            <DashboardShortcutCard navigationScreen="Agenda" icon="calendar" title="Agenda e Horários" text="Configurar disponibilidade" color="#8b5cf6" />
+            <DashboardShortcutCard navigationScreen="Consultas" icon="calendar" title="Consultas agendadas" text="Acompanhar agendamentos" color="#2563eb" />
 
         </ScrollView>
     );
