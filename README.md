@@ -33,6 +33,10 @@ O iClinic foi pensado para atender duas frentes principais:
 
 [iClinic – Figma](https://www.figma.com/design/BV24ItNLn5pegvgoUrf5uH/iClinic?node-id=0-1&p=f&t=uNYyKXjPqOmybFpL-0)
 
+## Diagrama de casos de uso
+
+[Visualizar diagrama de casos de uso](src/docs/iClinic_Casos_De_Uso.pdf)
+
 ## Desenvolvedores
 
 - José Alysson Matheus Lima de Oliveira
