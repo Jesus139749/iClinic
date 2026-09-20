@@ -2,8 +2,8 @@ import { Text, View } from "react-native";
 
 export const ConsultasScreen = () => {
   return (
-    <View>
-        <Text>ConsultasScreen</Text>
+    <View className="flex-1 items-center justify-center bg-white">
+        <Text className="text-lg font-semibold text-gray-800">Consultas agendadas</Text>
     </View>
   );
 }
