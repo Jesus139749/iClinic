@@ -14,11 +14,63 @@ export default function CadastroPacienteScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const [errors, setErrors] =useState<Record<string, string[]>>({
+    name: [],
+    email: [],
+    phone: [],
+    password: [],
+    confirmPassword: [],
+  });
 
   const onSubmit = () => {
-    console.log(name);
-    console.log(phone);
-  };
+    const newErrors: Record<string, string[]> = {
+      name: [],
+      email: [],
+      phone: [],
+      password: [],
+      confirmPassword: [],
+    };
+
+    if (!name.trim()) {
+      newErrors.name.push('Nome é obrigatório');
+    }
+    if (!email.trim()){
+      newErrors.email.push('E-mail é obrigatório');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email.push('E-mail deve ser válido');
+    }
+    if (!phone.trim()) {
+      newErrors.phone.push('Telefone é obrigatório');
+    } 
+    if (phone.length < 11) {
+      newErrors.phone.push('Telefone deve conter 11 dígitos');
+    }
+    if (!password.trim()) {
+      newErrors.password.push('Senha é obrigatória');
+    }
+    if (password.length < 8) {
+      newErrors.password.push('Senha deve conter no mínimo 8 caracteres');
+    }
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword.push('Confirmar Senha é obrigatório');
+    }
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword.push('As senhas não coincidem');
+    }
+    if (Object.values(newErrors).some((fieldErrors) => fieldErrors.length > 0)) {
+      setErrors(newErrors);
+      return;
+    }
+    console.log({
+      name,
+      email,
+      phone,
+      password,
+      confirmPassword,
+    });
+    }
 
   return (
 
@@ -32,6 +84,7 @@ export default function CadastroPacienteScreen() {
         <TextInputStyled
           label='Nome completo'
           value={name}
+          errors={errors.name}
           onChangeText={setName}
           placeholder='Ex: João da Silva'
           autoCapitalize='words'
@@ -39,6 +92,7 @@ export default function CadastroPacienteScreen() {
         <TextInputStyled
           label='E-mail'
           value={email}
+          errors={errors.email}
           onChangeText={setEmail}
           placeholder='seuemail@exemplo.com'
           autoCapitalize='none'
@@ -47,6 +101,7 @@ export default function CadastroPacienteScreen() {
         <TextInputStyled
           label='Telefone'
           value={phone}
+          errors={errors.phone}
           onChangeText={(_masked, unmasked) => {
             setPhone(unmasked);
           }}
@@ -58,6 +113,7 @@ export default function CadastroPacienteScreen() {
         <TextInputStyled
           label='Senha'
           value={password}
+          errors={errors.password}
           onChangeText={setPassword}
           placeholder='Mínimo 8 caracteres'
           autoCapitalize='none'
@@ -66,6 +122,7 @@ export default function CadastroPacienteScreen() {
         <TextInputStyled
           label='Confirmar Senha'
           value={confirmPassword}
+          errors={errors.confirmPassword}
           onChangeText={setConfirmPassword}
           placeholder='Repita sua senha'
           autoCapitalize='none'
