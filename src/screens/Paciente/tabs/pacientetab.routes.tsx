@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardPacienteScreen from '../Dashboard/DashboardPacienteScreen';
 import ConsultasScreen from '../Consultas/ConsultasScreen';
-import FavoritosScreen from '../Favoritos/FavoritosScreen';
+import FavoritosScreen from '../Buscar/BuscarScreen';
 import PerfilScreen from '../Perfil/PerfilScreen';
 import Ionicons from '@expo/vector-icons/build/Ionicons';
 
@@ -39,12 +39,12 @@ export default function PacienteTabRoutes() {
             />
 
             <Tab.Screen
-                name="Favoritos"
+                name="Buscar"
                 component={FavoritosScreen}
                 options={{
                     tabBarIcon: ({ color, size, focused }) => (
                         <Ionicons
-                            name={focused ? 'heart' : 'heart-outline'}
+                            name={focused ? 'search' : 'search-outline'}
                             size={size}
                             color={color}
                         />
