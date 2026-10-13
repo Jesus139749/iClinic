@@ -1,9 +1,46 @@
 import { useNavigation } from '@react-navigation/native';
-import { useState } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, Pressable, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInputStyled } from '../../../components/TextInputStyled';
 import { Masks } from 'react-native-mask-input';
+
+const estadosBrasileiros = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' },
+];
+
+interface ViaCepResponse {
+  erro?: boolean;
+  uf: string;
+  localidade: string;
+  bairro: string;
+}
 
 export default function CadastroClinicaScreen() {
   const navigation = useNavigation();
@@ -21,6 +58,9 @@ export default function CadastroClinicaScreen() {
   const [postalCode, setPostalCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isStatePickerVisible, setIsStatePickerVisible] = useState(false);
+  const [isLookingUpPostalCode, setIsLookingUpPostalCode] = useState(false);
+  const [postalCodeLookupError, setPostalCodeLookupError] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string[]>>({
     name: [],
@@ -36,6 +76,54 @@ export default function CadastroClinicaScreen() {
     password: [],
     confirmPassword: [],
   });
+
+  useEffect(() => {
+    if (postalCode.length !== 8) {
+      setIsLookingUpPostalCode(false);
+      setPostalCodeLookupError('');
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      setIsLookingUpPostalCode(true);
+      setPostalCodeLookupError('');
+
+      try {
+        const response = await fetch(
+          `https://viacep.com.br/ws/${postalCode}/json/`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          throw new Error('Não foi possível consultar o CEP. Tente novamente.');
+        }
+
+        const result = (await response.json()) as ViaCepResponse;
+        if (result.erro) {
+          setPostalCodeLookupError('CEP não encontrado. Confira o número digitado.');
+          return;
+        }
+
+        setState(result.uf);
+        setCity(result.localidade);
+        setNeighborhood(result.bairro);
+      } catch {
+        if (!controller.signal.aborted) {
+          setPostalCodeLookupError('Não foi possível consultar o CEP. Verifique sua conexão e tente novamente.');
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLookingUpPostalCode(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [postalCode]);
 
   const onSubmit = () => {
     const newErrors: Record<string, string[]> = {
@@ -177,69 +265,95 @@ export default function CadastroClinicaScreen() {
           keyboardType='phone-pad'
         />
 
-        <TextInputStyled
-          label='Logradouro'
-          value={street}
-          errors={errors.street}
-          onChangeText={setStreet}
-          placeholder='Ex: Rua das Flores'
-          autoCapitalize='words'
-        />
+        <View className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+          <Text className="text-lg font-bold text-gray-800">Endereço da clínica</Text>
+          <Text className="mt-1 text-sm text-slate-400">
+            Informe o CEP para preencher cidade, bairro e estado automaticamente.
+          </Text>
 
-        <TextInputStyled
-          label='Número'
-          value={number}
-          errors={errors.number}
-          onChangeText={setNumber}
-          placeholder='Ex: 123'
-          keyboardType='numeric'
-        />
+          <TextInputStyled
+            label='CEP'
+            value={postalCode}
+            errors={errors.postalCode}
+            mask={Masks.ZIP_CODE}
+            onChangeText={(_masked, unmasked) => {
+              setPostalCode(unmasked);
+              setCity('');
+              setState('');
+              setNeighborhood('');
+            }}
+            placeholder='00000-000'
+            keyboardType='numeric'
+          />
+          {isLookingUpPostalCode && (
+            <View className="mt-2 flex-row items-center">
+              <ActivityIndicator size="small" color="#2F80ED" />
+              <Text className="ml-2 text-sm text-slate-500">Consultando CEP...</Text>
+            </View>
+          )}
+          {!!postalCodeLookupError && (
+            <Text className="mt-2 text-sm text-red-400">{postalCodeLookupError}</Text>
+          )}
 
-        <TextInputStyled
-          label='Complemento (opcional)'
-          value={complement}
-          onChangeText={setComplement}
-          placeholder='Ex: Sala 4'
-          autoCapitalize='words'
-        />
+          <TextInputStyled
+            label='Logradouro'
+            value={street}
+            errors={errors.street}
+            onChangeText={setStreet}
+            placeholder='Ex: Rua das Flores'
+            autoCapitalize='words'
+          />
 
-        <TextInputStyled
-          label='Bairro'
-          value={neighborhood}
-          errors={errors.neighborhood}
-          onChangeText={setNeighborhood}
-          placeholder='Ex: Centro'
-          autoCapitalize='words'
-        />
+          <TextInputStyled
+            label='Número'
+            value={number}
+            errors={errors.number}
+            onChangeText={setNumber}
+            placeholder='Ex: 123'
+            keyboardType='numeric'
+          />
 
-        <TextInputStyled
-          label='Cidade'
-          value={city}
-          errors={errors.city}
-          onChangeText={setCity}
-          placeholder='Ex: São Paulo'
-          autoCapitalize='words'
-        />
+          <Text className="mb-2 mt-4 text-sm font-semibold text-gray-600">Estado (UF)</Text>
+          <Pressable
+            className="rounded-xl border border-gray-200 bg-white px-4 py-3"
+            onPress={() => setIsStatePickerVisible(true)}
+          >
+            <Text className={state ? 'text-base text-gray-800' : 'text-base text-slate-400'}>
+              {state
+                ? estadosBrasileiros.find((estado) => estado.sigla === state)?.nome ?? state
+                : 'Selecione o estado'}
+            </Text>
+          </Pressable>
+          {errors.state.map((error) => (
+            <Text key={error} className="text-sm text-red-400">{error}</Text>
+          ))}
 
-        <TextInputStyled
-          label='Estado (UF)'
-          value={state}
-          errors={errors.state}
-          onChangeText={setState}
-          placeholder='Ex: SP'
-          autoCapitalize='characters'
-          maxLength={2}
-        />
+          <TextInputStyled
+            label='Cidade'
+            value={city}
+            errors={errors.city}
+            onChangeText={setCity}
+            placeholder='Ex: São Paulo'
+            autoCapitalize='words'
+          />
 
-        <TextInputStyled
-          label='CEP'
-          value={postalCode}
-          errors={errors.postalCode}
-          mask={Masks.ZIP_CODE}
-          onChangeText={(_masked, unmasked) => setPostalCode(unmasked)}
-          placeholder='00000-000'
-          keyboardType='numeric'
-        />
+          <TextInputStyled
+            label='Bairro'
+            value={neighborhood}
+            errors={errors.neighborhood}
+            onChangeText={setNeighborhood}
+            placeholder='Ex: Centro'
+            autoCapitalize='words'
+          />
+
+          <TextInputStyled
+            label='Complemento (opcional)'
+            value={complement}
+            onChangeText={setComplement}
+            placeholder='Ex: Sala 4'
+            autoCapitalize='words'
+          />
+        </View>
 
         <TextInputStyled
           label='Senha'
@@ -285,6 +399,41 @@ export default function CadastroClinicaScreen() {
         </View>
 
       </ScrollView>
+
+      <Modal
+        visible={isStatePickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsStatePickerVisible(false)}
+      >
+        <View className="flex-1 justify-center bg-black/40 px-8">
+          <View className="max-h-3/4 rounded-2xl bg-white p-5">
+            <Text className="mb-3 text-lg font-bold text-gray-800">Selecione o estado</Text>
+            <ScrollView>
+              {estadosBrasileiros.map((estado) => (
+                <Pressable
+                  key={estado.sigla}
+                  className="border-b border-slate-100 py-3"
+                  onPress={() => {
+                    setState(estado.sigla);
+                    setIsStatePickerVisible(false);
+                  }}
+                >
+                  <Text className="text-base text-gray-700">
+                    {estado.nome} ({estado.sigla})
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <Pressable
+              className="mt-3 items-center rounded-xl bg-slate-100 py-3"
+              onPress={() => setIsStatePickerVisible(false)}
+            >
+              <Text className="font-semibold text-slate-600">Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
