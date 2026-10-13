@@ -44,6 +44,11 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## API documentation
+
+With the backend running, open the Swagger UI at [http://localhost:3000/api](http://localhost:3000/api).
+The API definition is also available at [http://localhost:3000/api-json](http://localhost:3000/api-json).
+
 ## Run tests
 
 ```bash
