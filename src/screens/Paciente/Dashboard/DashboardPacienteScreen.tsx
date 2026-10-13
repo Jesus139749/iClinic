@@ -3,6 +3,7 @@ import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { QuickActionPaciente } from './components/QuickActionPaciente';
 import { ClinicaCardPaciente, ClinicaCardPacienteProps } from './components/ClinicaCardPaciente';
+import { useNavigation } from '@react-navigation/native';
 
 const especialidades = ['Clínico Geral', 'Dermatologia', 'Ortopedia', 'Cardiologia', 'Pediatria'];
 
@@ -30,6 +31,7 @@ const clinicasRecomendadas: ClinicaCardPacienteProps[] = [
 ];
 
 export default function DashboardPacienteScreen() {
+  const navigation = useNavigation();
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
@@ -43,6 +45,7 @@ export default function DashboardPacienteScreen() {
             placeholder="Buscar clínica ou especialidade..."
             placeholderTextColor="#94A3B8"
             className="ml-2 flex-1 text-sm"
+            onFocus={() => navigation.navigate('Buscar' as never)}
           />
         </View>
 
@@ -52,17 +55,17 @@ export default function DashboardPacienteScreen() {
         </View>
 
         <View className="mt-3 flex-row gap-3">
-          <QuickActionPaciente icon="location-outline" label="Clínicas Próximas" />
-          <QuickActionPaciente icon="calendar-outline" label="Minhas Consultas" />
-          <QuickActionPaciente icon="medkit-outline" label="Especialidades" />
+          <QuickActionPaciente icon="location-outline" label="Clínicas Próximas" onPress={() => navigation.navigate('Buscar' as never)} />
+          <QuickActionPaciente icon="calendar-outline" label="Minhas Consultas" onPress={() => navigation.navigate('Consultas' as never)} />
+          <QuickActionPaciente icon="medkit-outline" label="Especialidades" onPress={() => navigation.navigate('Buscar' as never)} />
         </View>
 
         <Text className="mt-6 text-sm font-bold text-slate-800">Especialidades Populares</Text>
 
         <View className="mt-3 flex-row flex-wrap gap-3">
           {especialidades.map((esp) => (
-            <TouchableOpacity key={esp}>
-              <Text className="text-sm font-semibold text-blue-500">{esp}</Text>
+            <TouchableOpacity key={esp} onPress={() => navigation.navigate('Buscar' as never,)}>
+               <Text className="text-sm font-semibold text-blue-500">{esp}</Text>
             </TouchableOpacity>
           ))}
         </View>
