@@ -26,5 +26,22 @@ model User {
   phone        String?
   type         UserType
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime? @updatedAt
+
+  clinic       Clinic?
+}
+
+model Clinic {
+  id           Int    @id @default(autoincrement())
+  userId       Int    @unique
+  cnpj         String @unique
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  postalCode   String
+
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

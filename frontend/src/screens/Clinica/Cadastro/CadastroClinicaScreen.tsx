@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInputStyled } from '../../../components/TextInputStyled';
 import { Masks } from 'react-native-mask-input';
@@ -12,7 +12,13 @@ export default function CadastroClinicaScreen() {
   const [cnpj, setCnpj] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const [street, setStreet] = useState('');
+  const [number, setNumber] = useState('');
+  const [complement, setComplement] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -21,7 +27,12 @@ export default function CadastroClinicaScreen() {
     cnpj: [],
     email: [],
     phone: [],
-    address: [],
+    street: [],
+    number: [],
+    neighborhood: [],
+    city: [],
+    state: [],
+    postalCode: [],
     password: [],
     confirmPassword: [],
   });
@@ -32,7 +43,12 @@ export default function CadastroClinicaScreen() {
       cnpj: [],
       email: [],
       phone: [],
-      address: [],
+      street: [],
+      number: [],
+      neighborhood: [],
+      city: [],
+      state: [],
+      postalCode: [],
       password: [],
       confirmPassword: [],
     }
@@ -58,8 +74,26 @@ export default function CadastroClinicaScreen() {
     if (phone.length < 11)
       newErrors.phone.push('Telefone deve conter 11 dígitos');
 
-    if (!address.trim())
-      newErrors.address.push('Endereço é obrigatório');
+    if (!street.trim())
+      newErrors.street.push('Logradouro é obrigatório');
+
+    if (!number.trim())
+      newErrors.number.push('Número é obrigatório');
+
+    if (!neighborhood.trim())
+      newErrors.neighborhood.push('Bairro é obrigatório');
+
+    if (!city.trim())
+      newErrors.city.push('Cidade é obrigatória');
+
+    if (!state.trim())
+      newErrors.state.push('Estado é obrigatório');
+
+    if (!postalCode.trim())
+      newErrors.postalCode.push('CEP é obrigatório');
+
+    if (postalCode.length < 8)
+      newErrors.postalCode.push('CEP deve conter 8 dígitos');
 
     if (!password.trim())
       newErrors.password.push('Senha é obrigatória');
@@ -77,7 +111,13 @@ export default function CadastroClinicaScreen() {
       cnpj,
       email,
       phone,
-      address,
+      street,
+      number,
+      complement,
+      neighborhood,
+      city,
+      state,
+      postalCode,
       password,
       confirmPassword
     });
@@ -138,11 +178,67 @@ export default function CadastroClinicaScreen() {
         />
 
         <TextInputStyled
-          label='Endereço completo'
-          value={address}
-          errors={errors.address}
-          onChangeText={setAddress}
-          placeholder='Rua, número, bairro, cidade – UF'
+          label='Logradouro'
+          value={street}
+          errors={errors.street}
+          onChangeText={setStreet}
+          placeholder='Ex: Rua das Flores'
+          autoCapitalize='words'
+        />
+
+        <TextInputStyled
+          label='Número'
+          value={number}
+          errors={errors.number}
+          onChangeText={setNumber}
+          placeholder='Ex: 123'
+          keyboardType='numeric'
+        />
+
+        <TextInputStyled
+          label='Complemento (opcional)'
+          value={complement}
+          onChangeText={setComplement}
+          placeholder='Ex: Sala 4'
+          autoCapitalize='words'
+        />
+
+        <TextInputStyled
+          label='Bairro'
+          value={neighborhood}
+          errors={errors.neighborhood}
+          onChangeText={setNeighborhood}
+          placeholder='Ex: Centro'
+          autoCapitalize='words'
+        />
+
+        <TextInputStyled
+          label='Cidade'
+          value={city}
+          errors={errors.city}
+          onChangeText={setCity}
+          placeholder='Ex: São Paulo'
+          autoCapitalize='words'
+        />
+
+        <TextInputStyled
+          label='Estado (UF)'
+          value={state}
+          errors={errors.state}
+          onChangeText={setState}
+          placeholder='Ex: SP'
+          autoCapitalize='characters'
+          maxLength={2}
+        />
+
+        <TextInputStyled
+          label='CEP'
+          value={postalCode}
+          errors={errors.postalCode}
+          mask={Masks.ZIP_CODE}
+          onChangeText={(_masked, unmasked) => setPostalCode(unmasked)}
+          placeholder='00000-000'
+          keyboardType='numeric'
         />
 
         <TextInputStyled
