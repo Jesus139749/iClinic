@@ -79,25 +79,13 @@ function PerfilSwitchItem({ icon, label, value, onValueChange, ultimo }: PerfilS
   );
 }
 
-// ---------- Tela ----------
-
 export default function PerfilPacienteScreen() {
   const [push, setPush] = useState(true);
   const [email, setEmail] = useState(false);
   const [sms, setSms] = useState(true);
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
-      <View className="h-12 flex-row items-center justify-between px-6">
-        <View className="flex-row items-center">
-          <View className="mr-2 h-[26px] w-[26px] items-center justify-center rounded-full bg-[#2F80ED]">
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-          </View>
-          <Text className="text-lg font-bold text-[#2F80ED]">iClinic</Text>
-        </View>
-        <Ionicons name="notifications-outline" size={22} color="#2F80ED" />
-      </View>
-
+    <SafeAreaView className="flex-1 bg-slate-50" edges={[]}>
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
         <View className="mb-5 mt-4 items-center">
           <View className="h-24 w-24 items-center justify-center rounded-full bg-[#2F80ED]">
