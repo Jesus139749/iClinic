@@ -3,7 +3,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
+import { hash } from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateClinicaDto } from './dto/create-clinica.dto';
 
@@ -49,14 +49,13 @@ export class ClinicaService {
       throw new ConflictException('CNPJ já cadastrado');
     }
 
-    const salt = randomBytes(16).toString('hex');
-    const passwordHash = await this.hashPassword(password, salt);
+    const passwordHash = await hash(password, 12);
 
     await this.prisma.user.create({
       data: {
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        passwordHash: `scrypt$${salt}$${passwordHash.toString('hex')}`,
+        passwordHash,
         phone,
         type: 'CLINICA',
         clinic: {
@@ -75,16 +74,4 @@ export class ClinicaService {
     });
   }
 
-  private hashPassword(password: string, salt: string): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      scryptCallback(password, salt, 64, (error, derivedKey) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        resolve(derivedKey);
-      });
-    });
-  }
 }

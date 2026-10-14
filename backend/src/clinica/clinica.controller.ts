@@ -11,7 +11,6 @@ import { ClinicaService } from './clinica.service';
 import { CreateClinicaDto } from './dto/create-clinica.dto';
 
 @Controller('clinica')
-@ApiTags('Clínicas')
 export class ClinicaController {
   constructor(private readonly clinicaService: ClinicaService) {}
 

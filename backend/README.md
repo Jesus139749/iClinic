@@ -71,7 +71,7 @@ The API definition is also available at [http://localhost:3000/swagger-json](htt
 }
 ```
 
-The endpoint responds with `201 Created`, `400 Bad Request` for invalid input, and `409 Conflict` if the e-mail or CNPJ is already registered. Passwords are stored as salted scrypt hashes and are never included in the response.
+The endpoint responds with `201 Created`, `400 Bad Request` for invalid input, and `409 Conflict` if the e-mail or CNPJ is already registered. Passwords are stored as bcrypt hashes and are never included in the response. Existing scrypt hashes are upgraded to bcrypt after a successful login.
 
 The frontend defaults to `http://localhost:3000` on iOS/web and `http://10.0.2.2:3000` on the Android emulator. For a physical device, configure `EXPO_PUBLIC_API_URL` to use the backend computer's LAN address (for example, `http://192.168.1.20:3000`) and restart Expo.
 

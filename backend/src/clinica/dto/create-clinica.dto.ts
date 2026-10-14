@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsEmail,
   IsIn,
   IsNotEmpty,
   IsNumberString,
@@ -41,8 +42,7 @@ const estadosBrasileiros = [
 
 export class CreateClinicaDto {
   @ApiProperty({ example: 'Clínica São Lucas' })
-  @IsString()
-  @Matches(/\S/, { message: 'Nome é obrigatório' })
+  @IsNotEmpty({ message: 'Nome é obrigatório' })
   name!: string;
 
   @ApiProperty({ example: '12345678000195', minLength: 14, maxLength: 14 })
@@ -51,9 +51,7 @@ export class CreateClinicaDto {
   cnpj!: string;
 
   @ApiProperty({ example: 'contato@clinica.com.br' })
-  @Matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, {
-    message: 'E-mail deve ser válido',
-  })
+  @IsEmail({}, { message: 'E-mail deve ser válido' })
   email!: string;
 
   @ApiProperty({ example: '11987654321', minLength: 11, maxLength: 11 })
@@ -62,28 +60,23 @@ export class CreateClinicaDto {
   phone!: string;
 
   @ApiProperty({ example: 'Rua das Flores' })
-  @IsString()
-  @Matches(/\S/, { message: 'Logradouro é obrigatório' })
+  @IsNotEmpty({ message: 'Logradouro é obrigatório' })
   street!: string;
 
   @ApiProperty({ example: '123' })
-  @IsString()
-  @Matches(/\S/, { message: 'Número é obrigatório' })
+  @IsNotEmpty({ message: 'Número é obrigatório' })
   number!: string;
 
   @ApiPropertyOptional({ example: 'Sala 4' })
   @IsOptional()
-  @IsString()
   complement?: string;
 
   @ApiProperty({ example: 'Centro' })
-  @IsString()
-  @Matches(/\S/, { message: 'Bairro é obrigatório' })
+  @IsNotEmpty({ message: 'Bairro é obrigatório' })
   neighborhood!: string;
 
   @ApiProperty({ example: 'São Paulo' })
-  @IsString()
-  @Matches(/\S/, { message: 'Cidade é obrigatória' })
+  @IsNotEmpty({ message: 'Cidade é obrigatória' })
   city!: string;
 
   @ApiProperty({ example: 'SP', enum: estadosBrasileiros })
@@ -98,12 +91,10 @@ export class CreateClinicaDto {
   postalCode!: string;
 
   @ApiProperty({ example: 'SenhaSegura123', writeOnly: true })
-  @IsString()
   @IsNotEmpty({ message: 'Senha é obrigatória' })
-  @Matches(/\S/, { message: 'Senha é obrigatória' })
   password!: string;
 
   @ApiProperty({ example: 'SenhaSegura123', writeOnly: true })
-  @IsString()
+  @IsNotEmpty({ message: 'Confirmação de senha é obrigatória' })
   confirmPassword!: string;
 }
