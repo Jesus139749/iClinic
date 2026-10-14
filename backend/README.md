@@ -46,8 +46,34 @@ $ npm run start:prod
 
 ## API documentation
 
-With the backend running, open the Swagger UI at [http://localhost:3000/api](http://localhost:3000/api).
-The API definition is also available at [http://localhost:3000/api-json](http://localhost:3000/api-json).
+With the backend running, open the Swagger UI at [http://localhost:3000/swagger](http://localhost:3000/swagger).
+The API definition is also available at [http://localhost:3000/swagger-json](http://localhost:3000/swagger-json).
+
+### Clinic registration
+
+`POST /clinica` creates a clinic user and its address. CNPJ, phone, and postal code must be sent as digit-only strings. The request body is documented in Swagger and follows this shape:
+
+```json
+{
+  "name": "Clínica São Lucas",
+  "cnpj": "12345678000195",
+  "email": "contato@clinica.com.br",
+  "phone": "11987654321",
+  "street": "Rua das Flores",
+  "number": "123",
+  "complement": "Sala 4",
+  "neighborhood": "Centro",
+  "city": "São Paulo",
+  "state": "SP",
+  "postalCode": "01001000",
+  "password": "SenhaSegura123",
+  "confirmPassword": "SenhaSegura123"
+}
+```
+
+The endpoint responds with `201 Created`, `400 Bad Request` for invalid input, and `409 Conflict` if the e-mail or CNPJ is already registered. Passwords are stored as salted scrypt hashes and are never included in the response.
+
+The frontend defaults to `http://localhost:3000` on iOS/web and `http://10.0.2.2:3000` on the Android emulator. For a physical device, configure `EXPO_PUBLIC_API_URL` to use the backend computer's LAN address (for example, `http://192.168.1.20:3000`) and restart Expo.
 
 ## Run tests
 
