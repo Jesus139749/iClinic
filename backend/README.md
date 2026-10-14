@@ -49,6 +49,10 @@ $ npm run start:prod
 With the backend running, open the Swagger UI at [http://localhost:3000/swagger](http://localhost:3000/swagger).
 The API definition is also available at [http://localhost:3000/swagger-json](http://localhost:3000/swagger-json).
 
+### Authentication
+
+Set `JWT_SECRET` in the backend environment to a secure secret before starting the API. Generate one with `openssl rand -base64 32`. `POST /login` returns a signed JWT in `token` and the user's `role` (`PACIENTE` or `CLINICA`). The token contains the user ID in `sub` and expires after one hour. For protected endpoints, send the token in the `Authorization` header using the Bearer scheme. `GET /` requires authentication.
+
 ### Clinic registration
 
 `POST /clinica` creates a clinic user and its address. CNPJ, phone, and postal code must be sent as digit-only strings. The request body is documented in Swagger and follows this shape:

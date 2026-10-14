@@ -23,6 +23,7 @@ async function bootstrap() {
     .setTitle('iClinic API')
     .setDescription('Documentação da API do iClinic')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('swagger', app, swaggerDocument);
