@@ -1,59 +1,173 @@
-import { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { TextInputStyled } from '../../components/TextInputStyled';
+import { useRef, useState } from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { TextInputStyled } from "../../components/TextInputStyled";
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+type LoginResponse = {
+  token: string;
+  role: "PACIENTE" | "CLINICA";
+};
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const submissionInProgress = useRef(false);
   const navigation = useNavigation();
 
-  function handleEntrar() {
-    navigation.navigate('Main' as never);
+  async function handleEntrar() {
+    if (submissionInProgress.current) return;
+
+    setSubmitError("");
+
+    if (!email.trim() || !senha) {
+      setSubmitError("Informe seu e-mail e sua senha para entrar.");
+      return;
+    }
+
+    if (!API_URL) {
+      setSubmitError(
+        "A URL da API não está configurada. Verifique EXPO_PUBLIC_API_URL.",
+      );
+      return;
+    }
+
+    submissionInProgress.current = true;
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: senha,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setSubmitError(
+            "E-mail ou senha inválidos. Confira os dados e tente novamente.",
+          );
+        } else if (response.status === 400) {
+          let message: string | string[] | undefined;
+          try {
+            const result = (await response.json()) as {
+              message?: string | string[];
+            };
+            message = result.message;
+          } catch {
+            // Show the generic validation message if the response isn't JSON.
+          }
+
+          setSubmitError(
+            Array.isArray(message)
+              ? message.join("\n")
+              : (message ?? "Confira os dados informados e tente novamente."),
+          );
+        } else {
+          setSubmitError(
+            "Não foi possível entrar. Tente novamente mais tarde.",
+          );
+        }
+        return;
+      }
+
+      let result: LoginResponse;
+      try {
+        result = (await response.json()) as LoginResponse;
+      } catch {
+        setSubmitError(
+          "O servidor retornou uma resposta inválida. Tente novamente.",
+        );
+        return;
+      }
+
+      if (
+        typeof result.token !== "string" ||
+        !result.token ||
+        (result.role !== "PACIENTE" && result.role !== "CLINICA")
+      ) {
+        setSubmitError(
+          "O servidor retornou uma resposta inválida. Tente novamente.",
+        );
+        return;
+      }
+
+      if (result.role === "PACIENTE") {
+        navigation.navigate("DashboardPaciente" as never);
+      } else {
+        navigation.navigate("DashboardClinica" as never);
+      }
+    } catch {
+      setSubmitError(
+        "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
+      );
+    } finally {
+      submissionInProgress.current = false;
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <View className="flex-1 justify-center bg-slate-50 px-8">
-
-     
       <View className="mb-10 items-center">
         <Text className="text-4xl font-bold text-blue-500">iClinic</Text>
         <Text className="mt-1 text-sm text-gray-400">Saúde ao seu alcance</Text>
       </View>
 
-      
       <TextInputStyled
-        label='E-mail'
+        label="E-mail"
         value={email}
         onChangeText={setEmail}
-        placeholder='seuemail@exemplo.com'
-        autoCapitalize='none'
+        placeholder="seuemail@exemplo.com"
+        autoCapitalize="none"
+        keyboardType="email-address"
       />
 
       <TextInputStyled
-        label='Senha'
+        label="Senha"
         value={senha}
         onChangeText={setSenha}
-        placeholder='Digite sua senha'
-        autoCapitalize='none'
+        placeholder="Digite sua senha"
+        autoCapitalize="none"
         secureTextEntry
       />
 
       <TouchableOpacity className="mb-7 mt-4 self-end">
-        <Text className="font-semibold text-blue-500">
-          Esqueci minha senha
-        </Text>
+        <Text className="font-semibold text-blue-500">Esqueci minha senha</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('DashboardPaciente' as never)}
+        onPress={handleEntrar}
+        disabled={isSubmitting}
+        accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
         className="h-14 items-center justify-center rounded-xl bg-blue-500"
       >
-        <Text className="text-base font-bold text-white">Entrar</Text>
+        {isSubmitting ? (
+          <View className="flex-row items-center gap-2">
+            <ActivityIndicator color="#FFFFFF" />
+            <Text className="text-base font-bold text-white">Entrando...</Text>
+          </View>
+        ) : (
+          <Text className="text-base font-bold text-white">Entrar</Text>
+        )}
       </TouchableOpacity>
 
-      
+      {submitError ? (
+        <Text
+          accessibilityRole="alert"
+          className="mt-3 text-center text-sm text-red-500"
+        >
+          {submitError}
+        </Text>
+      ) : null}
+
       <View className="border-t border-gray-200 pt-6">
         <Text className="mb-3 text-center text-sm font-semibold text-gray-600">
           Não tem uma conta? Cadastre-se como:
@@ -61,7 +175,7 @@ export default function LoginScreen() {
 
         <View className="flex-row gap-3">
           <TouchableOpacity
-            onPress={() => navigation.navigate('CadastroPaciente' as never)}
+            onPress={() => navigation.navigate("CadastroPaciente" as never)}
             className="h-14 flex-1 flex-row items-center justify-center rounded-xl border border-[#3182E8] bg-[#3182E8]"
           >
             <Ionicons name="person-outline" size={21} color="#FFFFFF" />
@@ -71,7 +185,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('CadastroClinica' as never)}
+            onPress={() => navigation.navigate("CadastroClinica" as never)}
             className="h-14 flex-1 flex-row items-center justify-center rounded-xl border border-[#E0E4EA] bg-white"
           >
             <Ionicons name="home" size={20} color="#000000" />
@@ -81,7 +195,6 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       </View>
-
     </View>
   );
 }
