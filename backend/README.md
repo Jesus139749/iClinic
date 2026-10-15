@@ -77,6 +77,24 @@ Set `JWT_SECRET` in the backend environment to a secure secret before starting t
 
 The endpoint responds with `201 Created`, `400 Bad Request` for invalid input, and `409 Conflict` if the e-mail or CNPJ is already registered. Passwords are stored as bcrypt hashes and are never included in the response. Existing scrypt hashes are upgraded to bcrypt after a successful login.
 
+### Patient registration
+
+`POST /paciente` creates a patient account. Send the phone number as 11 digits and use a password between 8 characters and 72 UTF-8 bytes. The request body is:
+
+```json
+{
+  "name": "João da Silva",
+  "email": "joao@example.com",
+  "phone": "11987654321",
+  "password": "SenhaSegura123",
+  "confirmPassword": "SenhaSegura123"
+}
+```
+
+The endpoint responds with `201 Created` and the patient's `id`, `name`, `email`, `phone`, `type`, and `createdAt`; it never returns the password or its hash. Invalid input or mismatched passwords return `400 Bad Request`, and a registered e-mail returns `409 Conflict`.
+
+To test it in Swagger, start the backend with `npm run start:dev`, open [http://localhost:3000/swagger](http://localhost:3000/swagger), expand **Paciente → POST /paciente**, select **Try it out**, enter the JSON above, and choose **Execute**.
+
 The frontend defaults to `http://localhost:3000` on iOS/web and `http://10.0.2.2:3000` on the Android emulator. For a physical device, configure `EXPO_PUBLIC_API_URL` to use the backend computer's LAN address (for example, `http://192.168.1.20:3000`) and restart Expo.
 
 ## Run tests
