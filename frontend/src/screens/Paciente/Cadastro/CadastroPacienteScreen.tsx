@@ -24,7 +24,6 @@ export default function CadastroPacienteScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const submissionInProgress = useRef(false);
 
   const [errors, setErrors] = useState<Record<string, string[]>>({
     name: [],
@@ -35,7 +34,6 @@ export default function CadastroPacienteScreen() {
   });
 
   const onSubmit = async () => {
-    if (submissionInProgress.current) return;
 
     setSubmitError("");
     const newErrors: Record<string, string[]> = {
@@ -82,14 +80,6 @@ export default function CadastroPacienteScreen() {
       return;
     }
 
-    if (!API_URL) {
-      setSubmitError(
-        "A URL da API não está configurada. Verifique EXPO_PUBLIC_API_URL.",
-      );
-      return;
-    }
-
-    submissionInProgress.current = true;
     setIsSubmitting(true);
 
     try {
@@ -106,34 +96,10 @@ export default function CadastroPacienteScreen() {
       });
 
       if (!response.ok) {
-        let apiMessage: string | string[] | undefined;
-
-        try {
-          const result = (await response.json()) as {
-            message?: string | string[];
-          };
-          apiMessage = result.message;
-        } catch {
-          // A status-specific message below is used when the response isn't JSON.
-        }
-
-        if (response.status === 409) {
-          setSubmitError(
-            "Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.",
-          );
-        } else if (response.status === 400) {
-          setSubmitError(
-            Array.isArray(apiMessage)
-              ? apiMessage.join("\n")
-              : (apiMessage ??
-                  "Confira os dados informados e tente novamente."),
-          );
-        } else {
-          setSubmitError(
-            "Não foi possível concluir o cadastro. Tente novamente mais tarde.",
-          );
-        }
-
+        const { message } = (await response.json()) as {
+          message: string | string[];
+        };
+        setSubmitError(Array.isArray(message) ? message.join("\n") : message);
         return;
       }
 
@@ -152,7 +118,6 @@ export default function CadastroPacienteScreen() {
         "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
       );
     } finally {
-      submissionInProgress.current = false;
       setIsSubmitting(false);
     }
   };

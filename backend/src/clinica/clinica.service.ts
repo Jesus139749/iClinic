@@ -33,8 +33,10 @@ export class ClinicaService {
       throw new BadRequestException('As senhas não conferem');
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const existingUser = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -54,7 +56,7 @@ export class ClinicaService {
     await this.prisma.user.create({
       data: {
         name: name.trim(),
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         passwordHash,
         phone,
         type: 'CLINICA',

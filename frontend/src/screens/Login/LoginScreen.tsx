@@ -16,11 +16,9 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const submissionInProgress = useRef(false);
   const navigation = useNavigation();
 
   async function handleEntrar() {
-    if (submissionInProgress.current) return;
 
     setSubmitError("");
 
@@ -29,14 +27,6 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!API_URL) {
-      setSubmitError(
-        "A URL da API não está configurada. Verifique EXPO_PUBLIC_API_URL.",
-      );
-      return;
-    }
-
-    submissionInProgress.current = true;
     setIsSubmitting(true);
 
     try {
@@ -50,54 +40,14 @@ export default function LoginScreen() {
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          setSubmitError(
-            "E-mail ou senha inválidos. Confira os dados e tente novamente.",
-          );
-        } else if (response.status === 400) {
-          let message: string | string[] | undefined;
-          try {
-            const result = (await response.json()) as {
-              message?: string | string[];
-            };
-            message = result.message;
-          } catch {
-            // Show the generic validation message if the response isn't JSON.
-          }
-
-          setSubmitError(
-            Array.isArray(message)
-              ? message.join("\n")
-              : (message ?? "Confira os dados informados e tente novamente."),
-          );
-        } else {
-          setSubmitError(
-            "Não foi possível entrar. Tente novamente mais tarde.",
-          );
-        }
+        const { message } = (await response.json()) as {
+          message: string | string[];
+        };
+        setSubmitError(Array.isArray(message) ? message.join("\n") : message);
         return;
       }
 
-      let result: LoginResponse;
-      try {
-        result = (await response.json()) as LoginResponse;
-      } catch {
-        setSubmitError(
-          "O servidor retornou uma resposta inválida. Tente novamente.",
-        );
-        return;
-      }
-
-      if (
-        typeof result.token !== "string" ||
-        !result.token ||
-        (result.role !== "PACIENTE" && result.role !== "CLINICA")
-      ) {
-        setSubmitError(
-          "O servidor retornou uma resposta inválida. Tente novamente.",
-        );
-        return;
-      }
+      const result: LoginResponse = await response.json();
 
       if (result.role === "PACIENTE") {
         navigation.navigate("DashboardPaciente" as never);
@@ -109,7 +59,6 @@ export default function LoginScreen() {
         "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
       );
     } finally {
-      submissionInProgress.current = false;
       setIsSubmitting(false);
     }
   }
