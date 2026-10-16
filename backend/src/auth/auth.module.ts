@@ -21,6 +21,6 @@ if (!jwtSecret) {
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],
-  exports: [JwtModule],
+  exports: [JwtModule, JwtAuthGuard],
 })
 export class AuthModule {}
