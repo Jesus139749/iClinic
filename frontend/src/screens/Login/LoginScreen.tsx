@@ -3,6 +3,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { TextInputStyled } from "../../components/TextInputStyled";
+import { saveAuthToken } from "../../services/authTokenStorage";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -48,6 +49,22 @@ export default function LoginScreen() {
       }
 
       const result: LoginResponse = await response.json();
+      if (
+        !result.token ||
+        (result.role !== "PACIENTE" && result.role !== "CLINICA")
+      ) {
+        setSubmitError("O servidor retornou uma resposta de login inválida.");
+        return;
+      }
+
+      try {
+        await saveAuthToken(result.token);
+      } catch {
+        setSubmitError(
+          "Não foi possível armazenar sua sessão com segurança neste dispositivo.",
+        );
+        return;
+      }
 
       if (result.role === "PACIENTE") {
         navigation.navigate("DashboardPaciente" as never);
