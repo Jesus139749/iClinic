@@ -13,6 +13,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../auth/guards/jwt-auth.guard';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileService } from './profile.service';
 
@@ -52,5 +53,26 @@ export class ProfileController {
     @Body() updateProfileDto: UpdateProfileDto,
   ): Promise<{ name: string; email: string; phone: string | null }> {
     return this.profileService.updateMine(request.user, updateProfileDto);
+  }
+
+  @Patch('me/password')
+  @ApiOperation({ summary: 'Alterar a senha do paciente autenticado' })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiOkResponse({ description: 'Senha atualizada.' })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos ou senhas diferentes.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Acesso permitido somente para pacientes.',
+  })
+  @ApiNotFoundResponse({ description: 'Paciente não encontrado.' })
+  @ApiUnauthorizedResponse({
+    description: 'Token inválido ou senha atual incorreta.',
+  })
+  changePassword(
+    @Req() request: AuthenticatedRequest,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    return this.profileService.changePassword(request.user, changePasswordDto);
   }
 }
