@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaskInput, { Masks } from "react-native-mask-input";
 import {
+  changeMyPassword,
   getMyProfile,
   ProfileApiError,
   updateMyProfile,
@@ -131,6 +132,8 @@ export default function PerfilPacienteScreen() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const isChangingPasswordRef = useRef(false);
 
   useEffect(() => {
     let isCurrent = true;
@@ -184,7 +187,9 @@ export default function PerfilPacienteScreen() {
     }
   }
 
-  function handlePasswordChange() {
+  async function handlePasswordChange() {
+    if (isChangingPasswordRef.current) return;
+
     if (!currentPassword || !newPassword || !confirmPassword) {
       Alert.alert("Campos obrigatórios", "Preencha os três campos de senha.");
       return;
@@ -196,13 +201,28 @@ export default function PerfilPacienteScreen() {
       );
       return;
     }
-    Alert.alert(
-      "Indisponível",
-      "A alteração real da senha ainda não está disponível.",
-    );
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+
+    isChangingPasswordRef.current = true;
+    setIsChangingPassword(true);
+    try {
+      await changeMyPassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      Alert.alert("Senha atualizada", "Sua senha foi alterada com sucesso.");
+    } catch (error) {
+      Alert.alert(
+        "Não foi possível alterar a senha",
+        getProfileErrorMessage(error),
+      );
+    } finally {
+      isChangingPasswordRef.current = false;
+      setIsChangingPassword(false);
+    }
   }
 
   return (
@@ -341,7 +361,7 @@ export default function PerfilPacienteScreen() {
 
         <PerfilSecao titulo="Alterar senha">
           <Text className="mb-2 text-xs text-slate-500">
-            A alteração será apenas visual nesta etapa.
+            Sua senha atual será verificada antes de salvar.
           </Text>
           <CampoPerfil
             icon="lock-closed-outline"
@@ -377,11 +397,25 @@ export default function PerfilPacienteScreen() {
           <Pressable
             accessibilityRole="button"
             onPress={handlePasswordChange}
+            disabled={isChangingPassword}
+            accessibilityState={{
+              disabled: isChangingPassword,
+              busy: isChangingPassword,
+            }}
             className="mt-3 h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
           >
-            <Text className="text-sm font-bold text-blue-600">
-              Salvar nova senha
-            </Text>
+            {isChangingPassword ? (
+              <View className="flex-row items-center gap-2">
+                <ActivityIndicator color="#2563EB" />
+                <Text className="text-sm font-bold text-blue-600">
+                  Alterando...
+                </Text>
+              </View>
+            ) : (
+              <Text className="text-sm font-bold text-blue-600">
+                Salvar nova senha
+              </Text>
+            )}
           </Pressable>
         </PerfilSecao>
       </ScrollView>
