@@ -36,8 +36,13 @@ describe('ProfileService', () => {
     type: 'PACIENTE',
     passwordHash: 'must-not-be-returned',
   };
-  const mockedCompare = jest.mocked(compare);
-  const mockedHash = jest.mocked(hash);
+  const mockedCompare = compare as jest.MockedFunction<
+  (data: string, encrypted: string) => Promise<boolean>
+>;
+
+const mockedHash = hash as jest.MockedFunction<
+  (data: string, salt: string | number) => Promise<string>
+>;
 
   beforeEach(() => {
     jest.clearAllMocks();
