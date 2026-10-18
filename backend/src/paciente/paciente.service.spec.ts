@@ -1,9 +1,9 @@
 import { ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ProfileService } from './profile.service';
+import { PacienteService } from './paciente.service';
 
-describe('ProfileService', () => {
-  let service: ProfileService;
+describe('PacienteService profile operations', () => {
+  let service: PacienteService;
   let prisma: {
     user: {
       findUnique: jest.Mock;
@@ -27,7 +27,7 @@ describe('ProfileService', () => {
         update: jest.fn(),
       },
     };
-    service = new ProfileService(prisma as unknown as PrismaService);
+    service = new PacienteService(prisma as unknown as PrismaService);
   });
 
   it('returns only public profile fields for the authenticated patient', async () => {

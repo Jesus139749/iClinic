@@ -8,7 +8,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 
-export class UpdateProfileDto {
+export class UpdatePacienteDto {
   @ApiPropertyOptional({ example: 'João da Silva' })
   @ValidateIf((_object, value: unknown) => value !== undefined)
   @IsString()
