@@ -5,9 +5,6 @@ const AUTH_TOKEN_KEY = "iclinic.authToken";
 let webSessionToken: string | null = null;
 
 export async function saveAuthToken(token: string): Promise<void> {
-  if (!token.trim()) {
-    throw new Error("Não é possível armazenar um token vazio.");
-  }
 
   if (!(await SecureStore.isAvailableAsync())) {
     if (Platform.OS === "web") {

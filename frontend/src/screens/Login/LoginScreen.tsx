@@ -49,13 +49,6 @@ export default function LoginScreen() {
       }
 
       const result: LoginResponse = await response.json();
-      if (
-        !result.token ||
-        (result.role !== "PACIENTE" && result.role !== "CLINICA")
-      ) {
-        setSubmitError("O servidor retornou uma resposta de login inválida.");
-        return;
-      }
 
       try {
         await saveAuthToken(result.token);
