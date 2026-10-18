@@ -93,7 +93,7 @@ async function requestProfile(
     );
   }
 
-  const response = await fetch(`${API_URL}/profile/me`, {
+  const response = await fetch(`${API_URL}/paciente/me`, {
     method,
     headers: {
       Authorization: `Bearer ${token}`,
