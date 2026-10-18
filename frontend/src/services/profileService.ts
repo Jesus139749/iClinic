@@ -14,6 +14,12 @@ export interface UpdatePatientProfile {
   phone: string | null;
 }
 
+export interface ChangePatientPassword {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export class ProfileApiError extends Error {
   constructor(
     message: string,
@@ -133,4 +139,49 @@ export function updateMyProfile(
   profile: UpdatePatientProfile,
 ): Promise<PatientProfile> {
   return requestProfile("PATCH", profile);
+}
+
+export async function changeMyPassword(
+  password: ChangePatientPassword,
+): Promise<void> {
+  if (!API_URL) {
+    throw new Error("A variável EXPO_PUBLIC_API_URL não está configurada.");
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    throw new ProfileApiError(
+      "Sua sessão não foi encontrada. Volte à tela de login e entre novamente.",
+      401,
+    );
+  }
+
+  const response = await fetch(`${API_URL}/paciente/me/password`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(password),
+  });
+
+  let payload: unknown;
+  if (!response.ok) {
+    try {
+      payload = await response.json();
+    } catch {
+      payload = undefined;
+    }
+
+    const message =
+      response.status === 401 &&
+      payload &&
+      typeof payload === "object" &&
+      "message" in payload &&
+      payload.message === "Senha atual incorreta"
+        ? "A senha atual informada está incorreta."
+        : getErrorMessage(payload, response.status);
+
+    throw new ProfileApiError(message, response.status);
+  }
 }

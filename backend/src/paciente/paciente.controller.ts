@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../auth/guards/jwt-auth.guard';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PacienteService } from './paciente.service';
@@ -79,5 +80,28 @@ export class PacienteController {
     @Body() updatePacienteDto: UpdatePacienteDto,
   ): Promise<{ name: string; email: string; phone: string | null }> {
     return this.pacienteService.updateMine(request.user, updatePacienteDto);
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Alterar a senha do paciente autenticado' })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiOkResponse({ description: 'Senha atualizada.' })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos ou senhas diferentes.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Acesso permitido somente para pacientes.',
+  })
+  @ApiNotFoundResponse({ description: 'Paciente não encontrado.' })
+  @ApiUnauthorizedResponse({
+    description: 'Token inválido ou senha atual incorreta.',
+  })
+  changePassword(
+    @Req() request: AuthenticatedRequest,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    return this.pacienteService.changePassword(request.user, changePasswordDto);
   }
 }
