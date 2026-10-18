@@ -24,6 +24,7 @@ model User {
   email        String   @unique
   passwordHash String
   phone        String?
+  image        Bytes?
   type         UserType
   createdAt    DateTime @default(now())
   updatedAt    DateTime? @updatedAt
