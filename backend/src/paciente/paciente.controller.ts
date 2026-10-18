@@ -20,17 +20,20 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PacienteService } from './paciente.service';
+import { PacienteResponse } from './dto/paciente-response.interface';
 
 @ApiTags('Paciente')
 @Controller('paciente')
 export class PacienteController {
-  constructor(private readonly pacienteService: PacienteService) {}
+  constructor(private readonly pacienteService: PacienteService) { }
 
   @Post()
   @ApiOperation({ summary: 'Cadastrar um paciente' })
@@ -42,12 +45,13 @@ export class PacienteController {
     description: 'Dados inválidos ou senhas diferentes.',
   })
   @ApiConflictResponse({ description: 'O e-mail já está cadastrado.' })
-  create(@Body() createPacienteDto: CreatePacienteDto) {
+  create(@Body() createPacienteDto: CreatePacienteDto): Promise<void> {
     return this.pacienteService.create(createPacienteDto);
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PACIENTE')
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido.' })
   @ApiOperation({ summary: 'Consultar o perfil do paciente autenticado' })
@@ -58,12 +62,13 @@ export class PacienteController {
   @ApiNotFoundResponse({ description: 'Paciente não encontrado.' })
   getMine(
     @Req() request: AuthenticatedRequest,
-  ): Promise<{ name: string; email: string; phone: string | null }> {
+  ): Promise<PacienteResponse> {
     return this.pacienteService.getMine(request.user);
   }
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
+  @Roles('PACIENTE')
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido.' })
   @ApiOperation({ summary: 'Atualizar o perfil do paciente autenticado' })
@@ -78,12 +83,13 @@ export class PacienteController {
   updateMine(
     @Req() request: AuthenticatedRequest,
     @Body() updatePacienteDto: UpdatePacienteDto,
-  ): Promise<{ name: string; email: string; phone: string | null }> {
+  ): Promise<PacienteResponse> {
     return this.pacienteService.updateMine(request.user, updatePacienteDto);
   }
 
   @Patch('me/password')
   @UseGuards(JwtAuthGuard)
+  @Roles('PACIENTE')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Alterar a senha do paciente autenticado' })
   @ApiBody({ type: ChangePasswordDto })

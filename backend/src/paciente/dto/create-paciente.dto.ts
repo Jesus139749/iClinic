@@ -5,13 +5,12 @@ import {
   IsNumberString,
   IsString,
   Length,
-  Matches,
 } from 'class-validator';
 
 export class CreatePacienteDto {
   @ApiProperty({ example: 'João da Silva' })
   @IsString()
-  @Matches(/\S/, { message: 'Nome é obrigatório' })
+  @IsNotEmpty({ message: 'Nome é obrigatório' })
   name!: string;
 
   @ApiProperty({ example: 'joao@example.com' })

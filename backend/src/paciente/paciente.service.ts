@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -13,18 +12,13 @@ import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
-
-interface PacienteResponse {
-  name: string;
-  email: string;
-  phone: string | null;
-}
+import { PacienteResponse } from './dto/paciente-response.interface';
 
 @Injectable()
 export class PacienteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
-  async create(createPacienteDto: CreatePacienteDto) {
+  async create(createPacienteDto: CreatePacienteDto): Promise<void> {
     const { name, email, phone, password, confirmPassword } = createPacienteDto;
 
     if (password !== confirmPassword) {
@@ -55,16 +49,33 @@ export class PacienteService {
   }
 
   async getMine(user: AuthenticatedUser): Promise<PacienteResponse> {
-    return this.findPatient(user);
+    const patient = await this.prisma.user.findUnique({
+      where: { id: user.sub }
+    });
+
+    if (!patient) {
+      throw new NotFoundException('Paciente não encontrado');
+    }
+
+    return this.toResponse(patient);
   }
 
   async updateMine(
     user: AuthenticatedUser,
     dto: UpdatePacienteDto,
   ): Promise<PacienteResponse> {
-    const patient = await this.findPatient(user);
+    const existing = await this.prisma.user.findUnique({
+      where: { id: user.sub }
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Paciente não encontrado');
+    }
+
+    const patient = this.toResponse(existing);
 
     const data: Prisma.UserUpdateInput = {};
+
     if (dto.name !== undefined) {
       data.name = dto.name.trim();
     }
@@ -106,7 +117,14 @@ export class PacienteService {
     user: AuthenticatedUser,
     dto: ChangePasswordDto,
   ): Promise<void> {
-    const patient = await this.findPatientCredentials(user);
+
+    const patient = await this.prisma.user.findUnique({
+      where: { id: user.sub }
+    });
+
+    if (!patient) {
+      throw new NotFoundException('Paciente não encontrado');
+    }
 
     if (!(await compare(dto.currentPassword, patient.passwordHash))) {
       throw new UnauthorizedException('Senha atual incorreta');
@@ -121,57 +139,8 @@ export class PacienteService {
     const passwordHash = await hash(dto.newPassword, 12);
     await this.prisma.user.update({
       where: { id: user.sub },
-      data: { passwordHash },
-      select: { id: true },
+      data: { passwordHash }
     });
-  }
-
-  private async findPatientCredentials(
-    user: AuthenticatedUser,
-  ): Promise<{ id: number; passwordHash: string }> {
-    if (user.role !== 'PACIENTE') {
-      throw new ForbiddenException('Acesso permitido somente para pacientes');
-    }
-
-    const patient = await this.prisma.user.findUnique({
-      where: { id: user.sub },
-      select: {
-        id: true,
-        type: true,
-        passwordHash: true,
-      },
-    });
-
-    if (!patient || patient.type !== 'PACIENTE') {
-      throw new NotFoundException('Paciente não encontrado');
-    }
-
-    return { id: patient.id, passwordHash: patient.passwordHash };
-  }
-
-  private async findPatient(
-    user: AuthenticatedUser,
-  ): Promise<PacienteResponse> {
-    if (user.role !== 'PACIENTE') {
-      throw new ForbiddenException('Acesso permitido somente para pacientes');
-    }
-
-    const patient = await this.prisma.user.findUnique({
-      where: { id: user.sub },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        type: true,
-      },
-    });
-
-    if (!patient || patient.type !== 'PACIENTE') {
-      throw new NotFoundException('Paciente não encontrado');
-    }
-
-    return this.toResponse(patient);
   }
 
   private toResponse(patient: PacienteResponse): PacienteResponse {

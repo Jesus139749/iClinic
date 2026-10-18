@@ -5,9 +5,7 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsOptional,
-  IsString,
   Length,
-  Matches,
 } from 'class-validator';
 
 const estadosBrasileiros = [
