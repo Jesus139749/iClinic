@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   ScrollView,
   Text,
@@ -134,6 +136,7 @@ export default function PerfilPacienteScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const isChangingPasswordRef = useRef(false);
+  const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
   useEffect(() => {
     let isCurrent = true;
@@ -225,6 +228,64 @@ export default function PerfilPacienteScreen() {
     }
   }
 
+  async function selectProfilePhoto(source: "camera" | "gallery") {
+    try {
+      const permission =
+        source === "camera"
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          "Permissão necessária",
+          source === "camera"
+            ? "Permita o acesso à câmera para tirar uma foto."
+            : "Permita o acesso às fotos para escolher uma imagem.",
+        );
+        return;
+      }
+
+      const result =
+        source === "camera"
+          ? await ImagePicker.launchCameraAsync({
+              mediaTypes: ["images"],
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.8,
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ["images"],
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.8,
+            });
+
+      const selectedPhoto = result.canceled ? undefined : result.assets[0];
+      if (selectedPhoto) {
+        setProfilePhotoUri(selectedPhoto.uri);
+      }
+    } catch (error) {
+      Alert.alert(
+        "Não foi possível selecionar a foto",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    }
+  }
+
+  function showPhotoOptions() {
+    Alert.alert("Foto de perfil", "Escolha uma opção", [
+      {
+        text: "Tirar foto",
+        onPress: () => void selectProfilePhoto("camera"),
+      },
+      {
+        text: "Escolher da galeria",
+        onPress: () => void selectProfilePhoto("gallery"),
+      },
+      { text: "Cancelar", style: "cancel" },
+    ]);
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={[]}>
       <ScrollView
@@ -262,17 +323,20 @@ export default function PerfilPacienteScreen() {
         <View className="mb-5 mt-4 flex-row items-center rounded-2xl border border-slate-200 bg-white p-4">
           <View className="relative">
             <View className="h-20 w-20 items-center justify-center rounded-full bg-blue-100">
-              <Ionicons name="person" size={38} color="#2F80ED" />
+              {profilePhotoUri ? (
+                <Image
+                  source={{ uri: profilePhotoUri }}
+                  className="h-20 w-20 rounded-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <Ionicons name="person" size={38} color="#2F80ED" />
+              )}
             </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Adicionar ou trocar foto de perfil"
-              onPress={() =>
-                Alert.alert(
-                  "Foto de perfil",
-                  "Adicionar ou trocar a foto estará disponível futuramente.",
-                )
-              }
+              onPress={showPhotoOptions}
               className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#2F80ED]"
             >
               <Ionicons name="camera" size={16} color="#FFFFFF" />
@@ -285,12 +349,7 @@ export default function PerfilPacienteScreen() {
             <Text className="mt-1 text-sm text-slate-500">{email}</Text>
             <Pressable
               accessibilityRole="button"
-              onPress={() =>
-                Alert.alert(
-                  "Foto de perfil",
-                  "Adicionar ou trocar a foto estará disponível futuramente.",
-                )
-              }
+              onPress={showPhotoOptions}
               className="mt-2 flex-row items-center self-start"
             >
               <Ionicons name="camera-outline" size={16} color="#2563EB" />
