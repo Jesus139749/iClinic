@@ -19,6 +19,7 @@ import {
   getMyProfile,
   ProfileApiError,
   updateMyProfile,
+  updateMyProfileImage,
 } from "../../../services/profileService";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
@@ -137,6 +138,8 @@ export default function PerfilPacienteScreen() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const isChangingPasswordRef = useRef(false);
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const isUploadingPhotoRef = useRef(false);
 
   useEffect(() => {
     let isCurrent = true;
@@ -151,6 +154,7 @@ export default function PerfilPacienteScreen() {
         setName(profile.name);
         setEmail(profile.email);
         setPhone(profile.phone ?? "");
+        setProfilePhotoUri(profile.image);
       } catch (error) {
         if (!isCurrent) return;
         setLoadError(getProfileErrorMessage(error));
@@ -228,6 +232,33 @@ export default function PerfilPacienteScreen() {
     }
   }
 
+  async function uploadProfilePhoto(photo: ImagePicker.ImagePickerAsset) {
+    if (isUploadingPhotoRef.current) return;
+
+    const previousPhotoUri = profilePhotoUri;
+    isUploadingPhotoRef.current = true;
+    setIsUploadingPhoto(true);
+    setProfilePhotoUri(photo.uri);
+
+    try {
+      const updatedProfile = await updateMyProfileImage({
+        uri: photo.uri,
+        mimeType: photo.mimeType,
+        fileName: photo.fileName,
+      });
+      setProfilePhotoUri(updatedProfile.image);
+    } catch (error) {
+      setProfilePhotoUri(previousPhotoUri);
+      Alert.alert(
+        "Não foi possível enviar a foto",
+        getProfileErrorMessage(error),
+      );
+    } finally {
+      isUploadingPhotoRef.current = false;
+      setIsUploadingPhoto(false);
+    }
+  }
+
   async function selectProfilePhoto(source: "camera" | "gallery") {
     try {
       const permission =
@@ -262,7 +293,7 @@ export default function PerfilPacienteScreen() {
 
       const selectedPhoto = result.canceled ? undefined : result.assets[0];
       if (selectedPhoto) {
-        setProfilePhotoUri(selectedPhoto.uri);
+        await uploadProfilePhoto(selectedPhoto);
       }
     } catch (error) {
       Alert.alert(
@@ -273,6 +304,8 @@ export default function PerfilPacienteScreen() {
   }
 
   function showPhotoOptions() {
+    if (isUploadingPhotoRef.current) return;
+
     Alert.alert("Foto de perfil", "Escolha uma opção", [
       {
         text: "Tirar foto",
@@ -332,10 +365,16 @@ export default function PerfilPacienteScreen() {
               ) : (
                 <Ionicons name="person" size={38} color="#2F80ED" />
               )}
+              {isUploadingPhoto ? (
+                <View className="absolute h-20 w-20 items-center justify-center rounded-full bg-black/40">
+                  <ActivityIndicator color="#FFFFFF" />
+                </View>
+              ) : null}
             </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Adicionar ou trocar foto de perfil"
+              disabled={isUploadingPhoto}
               onPress={showPhotoOptions}
               className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#2F80ED]"
             >
@@ -349,12 +388,17 @@ export default function PerfilPacienteScreen() {
             <Text className="mt-1 text-sm text-slate-500">{email}</Text>
             <Pressable
               accessibilityRole="button"
+              disabled={isUploadingPhoto}
               onPress={showPhotoOptions}
               className="mt-2 flex-row items-center self-start"
             >
               <Ionicons name="camera-outline" size={16} color="#2563EB" />
               <Text className="ml-1 text-sm font-semibold text-blue-600">
-                Adicionar foto
+                {isUploadingPhoto
+                  ? "Enviando..."
+                  : profilePhotoUri
+                    ? "Trocar foto"
+                    : "Adicionar foto"}
               </Text>
             </Pressable>
           </View>

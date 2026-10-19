@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  UnsupportedMediaTypeException,
 } from '@nestjs/common';
 import { compare, hash } from 'bcryptjs';
 import { Prisma } from '../generated/prisma/client';
@@ -13,6 +14,27 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PacienteResponse } from './dto/paciente-response.interface';
+
+export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
+type ImageMimeType = 'image/jpeg' | 'image/png' | 'image/webp';
+
+function detectImageMimeType(bytes: Uint8Array): ImageMimeType | null {
+  const startsWith = (signature: number[], offset = 0) =>
+    signature.every((byte, index) => bytes[offset + index] === byte);
+
+  if (startsWith([0xff, 0xd8, 0xff])) return 'image/jpeg';
+  if (startsWith([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return 'image/png';
+  }
+  if (
+    startsWith([0x52, 0x49, 0x46, 0x46]) &&
+    startsWith([0x57, 0x45, 0x42, 0x50], 8)
+  ) {
+    return 'image/webp';
+  }
+  return null;
+}
 
 @Injectable()
 export class PacienteService {
@@ -99,6 +121,7 @@ export class PacienteService {
           name: true,
           email: true,
           phone: true,
+          image: true,
         },
       });
       return this.toResponse(updatedPatient);
@@ -108,6 +131,37 @@ export class PacienteService {
         error.code === 'P2002'
       ) {
         throw new ConflictException('E-mail já cadastrado');
+      }
+      throw error;
+    }
+  }
+
+  async updateImage(
+    user: AuthenticatedUser,
+    file: Express.Multer.File | undefined,
+  ): Promise<PacienteResponse> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Envie uma imagem no campo "image"');
+    }
+
+    if (!detectImageMimeType(file.buffer)) {
+      throw new UnsupportedMediaTypeException(
+        'A imagem deve estar no formato JPEG, PNG ou WebP',
+      );
+    }
+
+    try {
+      const updatedPatient = await this.prisma.user.update({
+        where: { id: user.sub },
+        data: { image: new Uint8Array(file.buffer) },
+      });
+      return this.toResponse(updatedPatient);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Paciente não encontrado');
       }
       throw error;
     }
@@ -143,11 +197,26 @@ export class PacienteService {
     });
   }
 
-  private toResponse(patient: PacienteResponse): PacienteResponse {
+  private toResponse(patient: {
+    name: string;
+    email: string;
+    phone: string | null;
+    image: Uint8Array | null;
+  }): PacienteResponse {
     return {
       name: patient.name,
       email: patient.email,
       phone: patient.phone,
+      image: this.toDataUri(patient.image),
     };
+  }
+
+  private toDataUri(image: Uint8Array | null): string | null {
+    if (!image?.length) {
+      return null;
+    }
+
+    const mimeType = detectImageMimeType(image) ?? 'image/jpeg';
+    return `data:${mimeType};base64,${Buffer.from(image).toString('base64')}`;
   }
 }

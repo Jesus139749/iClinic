@@ -1,3 +1,5 @@
+import { File } from "expo-file-system";
+import { Platform } from "react-native";
 import { getAuthToken } from "./authTokenStorage";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "");
@@ -6,6 +8,13 @@ export interface PatientProfile {
   name: string;
   email: string;
   phone: string | null;
+  image: string | null;
+}
+
+export interface ProfileImageFile {
+  uri: string;
+  mimeType?: string | null;
+  fileName?: string | null;
 }
 
 export interface UpdatePatientProfile {
@@ -79,13 +88,25 @@ function isPatientProfile(value: unknown): value is PatientProfile {
     "email" in value &&
     typeof value.email === "string" &&
     "phone" in value &&
-    (typeof value.phone === "string" || value.phone === null)
+    (typeof value.phone === "string" || value.phone === null) &&
+    "image" in value &&
+    (typeof value.image === "string" || value.image === null)
   );
 }
 
 async function requestProfile(
   method: "GET" | "PATCH",
   body?: UpdatePatientProfile,
+): Promise<PatientProfile>;
+async function requestProfile(
+  method: "PUT",
+  body: FormData,
+  path: string,
+): Promise<PatientProfile>;
+async function requestProfile(
+  method: "GET" | "PATCH" | "PUT",
+  body?: UpdatePatientProfile | FormData,
+  path = "/paciente/me",
 ): Promise<PatientProfile> {
   if (!API_URL) {
     throw new Error("A variável EXPO_PUBLIC_API_URL não está configurada.");
@@ -99,13 +120,15 @@ async function requestProfile(
     );
   }
 
-  const response = await fetch(`${API_URL}/paciente/me`, {
+  const isFormData = body instanceof FormData;
+  const response = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${token}`,
-      ...(body ? { "Content-Type": "application/json" } : {}),
+      // Em multipart o fetch define o Content-Type com o boundary.
+      ...(body && !isFormData ? { "Content-Type": "application/json" } : {}),
     },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   });
 
   let payload: unknown;
@@ -139,6 +162,25 @@ export function updateMyProfile(
   profile: UpdatePatientProfile,
 ): Promise<PatientProfile> {
   return requestProfile("PATCH", profile);
+}
+
+export async function updateMyProfileImage(
+  image: ProfileImageFile,
+): Promise<PatientProfile> {
+  const mimeType = image.mimeType ?? "image/jpeg";
+  const extension = mimeType.split("/")[1] ?? "jpg";
+  const formData = new FormData();
+
+  if (Platform.OS === "web") {
+    // No web o FormData exige um Blob; no nativo basta { uri, name, type }.
+    const blob = await (await fetch(image.uri)).blob();
+    formData.append("image", blob, image.fileName ?? `perfil.${extension}`);
+  } else {
+    // O fetch do Expo só aceita Blob/File no FormData, não { uri, name, type }.
+    formData.append("image", new File(image.uri), image.fileName ?? `perfil.${extension}`);
+  }
+
+  return requestProfile("PUT", formData, "/paciente/me/image");
 }
 
 export async function changeMyPassword(

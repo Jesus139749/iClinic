@@ -4,14 +4,19 @@ import {
   Get,
   Patch,
   Post,
+  Put,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -19,6 +24,7 @@ import {
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiUnsupportedMediaTypeResponse,
 } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../auth/guards/jwt-auth.guard';
@@ -27,7 +33,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
-import { PacienteService } from './paciente.service';
+import { MAX_IMAGE_SIZE_BYTES, PacienteService } from './paciente.service';
 import { PacienteResponse } from './dto/paciente-response.interface';
 
 @ApiTags('Paciente')
@@ -85,6 +91,39 @@ export class PacienteController {
     @Body() updatePacienteDto: UpdatePacienteDto,
   ): Promise<PacienteResponse> {
     return this.pacienteService.updateMine(request.user, updatePacienteDto);
+  }
+
+  @Put('me/image')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PACIENTE')
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido.' })
+  @ApiOperation({ summary: 'Enviar a foto de perfil do paciente autenticado' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['image'],
+      properties: { image: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOkResponse({ description: 'Perfil com a foto atualizada.' })
+  @ApiBadRequestResponse({ description: 'Imagem ausente ou acima de 5 MB.' })
+  @ApiUnsupportedMediaTypeResponse({
+    description: 'Formato diferente de JPEG, PNG ou WebP.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Acesso permitido somente para pacientes.',
+  })
+  @ApiNotFoundResponse({ description: 'Paciente não encontrado.' })
+  @UseInterceptors(
+    FileInterceptor('image', { limits: { fileSize: MAX_IMAGE_SIZE_BYTES } }),
+  )
+  updateImage(
+    @Req() request: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ): Promise<PacienteResponse> {
+    return this.pacienteService.updateImage(request.user, file);
   }
 
   @Patch('me/password')
