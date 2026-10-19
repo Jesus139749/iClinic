@@ -73,7 +73,7 @@ export class PacienteController {
   }
 
   @Patch('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PACIENTE')
   @ApiBearerAuth()
   @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido.' })
@@ -126,8 +126,8 @@ export class PacienteController {
     return this.pacienteService.updateImage(request.user, file);
   }
 
-  @Patch('me/password')
-  @UseGuards(JwtAuthGuard)
+  @Put('me/password')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PACIENTE')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Alterar a senha do paciente autenticado' })

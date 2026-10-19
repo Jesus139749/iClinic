@@ -199,7 +199,7 @@ export async function changeMyPassword(
   }
 
   const response = await fetch(`${API_URL}/paciente/me/password`, {
-    method: "PATCH",
+    method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
