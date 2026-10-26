@@ -130,6 +130,10 @@ npm run web        # navegador
 | PATCH  | `/paciente/me`      | JWT (`PACIENTE`)  | Atualiza dados do perfil                |
 | PUT    | `/paciente/me/image`| JWT (`PACIENTE`)  | Envia/atualiza a foto de perfil         |
 | PUT    | `/paciente/me/password` | JWT (`PACIENTE`) | Altera a senha                       |
+| GET    | `/clinica/me`       | JWT (`CLINICA`)   | Retorna o perfil da clínica logada      |
+| PATCH  | `/clinica/me`       | JWT (`CLINICA`)   | Atualiza dados e endereço da clínica    |
+| PUT    | `/clinica/me/image` | JWT (`CLINICA`)   | Envia/atualiza a foto da clínica        |
+| PUT    | `/clinica/me/password` | JWT (`CLINICA`) | Altera a senha                        |
 
 ### Autenticação
 

@@ -39,7 +39,7 @@ export class ProfileApiError extends Error {
   }
 }
 
-function getErrorMessage(payload: unknown, status: number): string {
+export function getErrorMessage(payload: unknown, status: number): string {
   if (status === 401) {
     return "Sua sessão expirou. Volte à tela de login e entre novamente.";
   }

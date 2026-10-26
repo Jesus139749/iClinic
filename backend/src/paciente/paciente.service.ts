@@ -19,7 +19,7 @@ export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 type ImageMimeType = 'image/jpeg' | 'image/png' | 'image/webp';
 
-function detectImageMimeType(bytes: Uint8Array): ImageMimeType | null {
+export function detectImageMimeType(bytes: Uint8Array): ImageMimeType | null {
   const startsWith = (signature: number[], offset = 0) =>
     signature.every((byte, index) => bytes[offset + index] === byte);
 

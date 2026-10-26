@@ -5,7 +5,9 @@ import { MedicosScreen } from '../Medicos/MedicosScreen';
 import { AgendaScreen } from '../Agenda/AgendaScreen';
 import { ConsultasScreen } from '../Consultas/ConsultasScreen';
 
-const Tab = createBottomTabNavigator();
+import PerfilClinicaScreen from '../Perfil/PerfilClinicaScreen';
+
+const Tab =createBottomTabNavigator();
 
 export default function ClinicaTabRoutes() {
     return (
@@ -59,6 +61,20 @@ export default function ClinicaTabRoutes() {
                     tabBarIcon: ({ color, size, focused }) => (
                         <Ionicons
                             name={focused ? 'clipboard' : 'clipboard-outline'}
+                            size={size}
+                            color={color}
+                        />
+                    )
+                }}
+            />
+
+            <Tab.Screen
+                name="Perfil"
+                component={PerfilClinicaScreen}
+                options={{
+                    tabBarIcon: ({ color, size, focused }) => (
+                        <Ionicons
+                            name={focused ? 'person' : 'person-outline'}
                             size={size}
                             color={color}
                         />

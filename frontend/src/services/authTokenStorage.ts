@@ -20,6 +20,14 @@ export async function saveAuthToken(token: string): Promise<void> {
   await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
 }
 
+export async function clearAuthToken(): Promise<void> {
+  webSessionToken = null;
+
+  if (await SecureStore.isAvailableAsync()) {
+    await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
+  }
+}
+
 export async function getAuthToken(): Promise<string | null> {
   if (!(await SecureStore.isAvailableAsync())) {
     if (Platform.OS === "web") {
