@@ -134,6 +134,14 @@ npm run web        # navegador
 | PATCH  | `/clinica/me`       | JWT (`CLINICA`)   | Atualiza dados e endereço da clínica    |
 | PUT    | `/clinica/me/image` | JWT (`CLINICA`)   | Envia/atualiza a foto da clínica        |
 | PUT    | `/clinica/me/password` | JWT (`CLINICA`) | Altera a senha                        |
+| GET    | `/clinica/medicos`  | JWT (`CLINICA`)   | Lista os médicos da clínica             |
+| GET    | `/clinica/medicos/:id` | JWT (`CLINICA`) | Retorna um médico da clínica           |
+| POST   | `/clinica/medicos`  | JWT (`CLINICA`)   | Cadastra um médico                      |
+| PATCH  | `/clinica/medicos/:id` | JWT (`CLINICA`) | Atualiza, desativa ou reativa um médico |
+| PUT    | `/clinica/medicos/:id/image` | JWT (`CLINICA`) | Envia/atualiza a foto do médico |
+| GET    | `/clinica/especialidades` | JWT (`CLINICA`) | Lista as especialidades com a contagem de médicos |
+| POST   | `/clinica/especialidades` | JWT (`CLINICA`) | Cadastra uma especialidade        |
+| DELETE | `/clinica/especialidades/:id` | JWT (`CLINICA`) | Remove uma especialidade sem médicos |
 
 ### Autenticação
 
@@ -181,13 +189,31 @@ Responde `201 Created` com `id`, `name`, `email`, `phone`, `type` e `createdAt`.
 
 Para testar pelo Swagger: abra `/swagger`, expanda **Paciente → POST /paciente**, clique em **Try it out**, informe o JSON acima e **Execute**.
 
+### Gerenciamento de médicos
+
+Todas as rotas exigem JWT com `role` `CLINICA` e só enxergam dados da própria clínica (um médico de outra clínica retorna `404`). Primeiro cadastre as especialidades da clínica com `POST /clinica/especialidades` (`{ "name": "Dermatologia" }`); depois cadastre o médico com `POST /clinica/medicos`:
+
+```json
+{
+  "name": "Dra. Camila Ferreira",
+  "crm": "123456SP",
+  "phone": "11987654321",
+  "specialtyIds": [1, 2]
+}
+```
+
+`phone` é opcional (11 dígitos) e `specialtyIds` exige ao menos uma especialidade da própria clínica. A resposta traz `id`, `name`, `crm`, `phone`, `image` (data URI ou `null`), `active` e `specialties`. `PATCH /clinica/medicos/:id` aceita os mesmos campos (todos opcionais) mais `active`: `false` desativa o médico e `true` o reativa. A foto é enviada em `PUT /clinica/medicos/:id/image` (multipart, campo `image`, JPEG/PNG/WebP, máx. 5 MB).
+
+Respostas: `400` para dados inválidos ou especialidade de outra clínica, `404` para clínica/médico/especialidade inexistente e `409` para CRM ou especialidade duplicados. `DELETE /clinica/especialidades/:id` responde `204`, ou `409` se algum médico ainda usa a especialidade.
+
 ## Modelo de dados
 
 Definido em `backend/prisma/schema.prisma`:
 
 - **User**: `name`, `email` (único), `passwordHash`, `phone`, `image` (bytes), `type` (`PACIENTE` | `CLINICA`)
 - **Clinic**: vinculada a um `User`; `cnpj` (único) e endereço completo
-- **Doctor**: vinculado a uma `Clinic`; `name`, `crm` (único), `specialty`, `phone`
+- **Doctor**: vinculado a uma `Clinic`; `name`, `crm` (único), `phone`, `image` (bytes), `active`, e N:N com `Specialty`
+- **Specialty**: catálogo de especialidades de uma `Clinic`; `name` (único por clínica)
 
 ## Estrutura dos projetos
 
@@ -197,6 +223,7 @@ backend/
 ├── src/
 │   ├── auth/          # login, JWT, guards e decorator de roles
 │   ├── clinica/       # cadastro de clínicas
+│   ├── medico/        # médicos e especialidades da clínica
 │   ├── paciente/      # cadastro e perfil de pacientes
 │   └── main.ts
 └── test/              # testes e2e
