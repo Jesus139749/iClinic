@@ -6,7 +6,7 @@ import { lightenColor } from "../../../../utils/color";
 export interface DashboardCardProps {
     icon: ComponentProps<typeof Ionicons>["name"];
     badgeText: string;
-    number: number;
+    number: number | string;
     text: string;
     color: string;
 }

@@ -46,6 +46,18 @@ model Clinic {
 
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   doctors      Doctor[]
+  specialties  Specialty[]
+}
+
+model Specialty {
+  id       Int    @id @default(autoincrement())
+  clinicId Int
+  name     String
+
+  clinic   Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  doctors  Doctor[]
+
+  @@unique([clinicId, name])
 }
 
 model Doctor {
@@ -53,10 +65,12 @@ model Doctor {
   clinicId  Int
   name      String
   crm       String   @unique
-  specialty String
   phone     String?
+  image     Bytes?
+  active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
 
-  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  specialties Specialty[]
 }

@@ -4,6 +4,7 @@ import LoginScreen from '../screens/Login/LoginScreen';
 import CadastroPacienteScreen from '../screens/Paciente/Cadastro/CadastroPacienteScreen';
 import CadastroClinicaScreen from '../screens/Clinica/Cadastro/CadastroClinicaScreen';
 import { Header } from '../components/Header';
+import MedicoFormScreen from '../screens/Clinica/Medicos/MedicoFormScreen';
 import ClinicaTabRoutes from '../screens/Clinica/tabs/clinicatab.routes';
 import PacienteTabRoutes from '../screens/Paciente/tabs/pacientetab.routes';
 
@@ -44,6 +45,22 @@ export default function AppRoutes() {
       <Stack.Screen
         name="DashboardClinica"
         component={ClinicaTabRoutes}
+        options={{
+          headerShown: true,
+          header: () => <Header />
+        }} />
+
+      <Stack.Screen
+        name="CadastroMedico"
+        component={MedicoFormScreen}
+        options={{
+          headerShown: true,
+          header: () => <Header />
+        }} />
+
+      <Stack.Screen
+        name="EditarMedico"
+        component={MedicoFormScreen}
         options={{
           headerShown: true,
           header: () => <Header />
