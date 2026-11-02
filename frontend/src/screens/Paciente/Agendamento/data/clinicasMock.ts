@@ -4,6 +4,7 @@ export interface ClinicaMedico {
   id: number;
   nome: string;
   especialidade: string;
+  horariosDisponiveis: string[];
 }
 
 export interface ClinicaPaciente {
@@ -44,8 +45,18 @@ export const clinicasMock: ClinicaPaciente[] = [
       "Sábado, das 08:00 às 14:00",
     ],
     medicos: [
-      { id: 1, nome: "Dra. Ana Oliveira", especialidade: "Cardiologia" },
-      { id: 2, nome: "Dr. Rafael Costa", especialidade: "Clínica Geral" },
+      {
+        id: 1,
+        nome: "Dra. Ana Oliveira",
+        especialidade: "Cardiologia",
+        horariosDisponiveis: ["Hoje, 14:00", "Hoje, 15:30"],
+      },
+      {
+        id: 2,
+        nome: "Dr. Rafael Costa",
+        especialidade: "Clínica Geral",
+        horariosDisponiveis: ["Amanhã, 09:00", "Amanhã, 10:30"],
+      },
     ],
     diferenciais: [
       "Atendimento humanizado",
@@ -72,8 +83,18 @@ export const clinicasMock: ClinicaPaciente[] = [
       "Sábado, das 08:00 às 12:00",
     ],
     medicos: [
-      { id: 3, nome: "Dra. Camila Nunes", especialidade: "Cardiologia" },
-      { id: 4, nome: "Dr. Pedro Almeida", especialidade: "Endocrinologia" },
+      {
+        id: 3,
+        nome: "Dra. Camila Nunes",
+        especialidade: "Cardiologia",
+        horariosDisponiveis: ["Amanhã, 09:00", "Amanhã, 10:30"],
+      },
+      {
+        id: 4,
+        nome: "Dr. Pedro Almeida",
+        especialidade: "Endocrinologia",
+        horariosDisponiveis: ["Qua, 11:00", "Qua, 13:30"],
+      },
     ],
     diferenciais: [
       "Próximo ao metrô",
@@ -100,11 +121,17 @@ export const clinicasMock: ClinicaPaciente[] = [
       "Sábado e domingo, atendimento de urgência",
     ],
     medicos: [
-      { id: 5, nome: "Dr. Bruno Martins", especialidade: "Cardiologia" },
+      {
+        id: 5,
+        nome: "Dr. Bruno Martins",
+        especialidade: "Cardiologia",
+        horariosDisponiveis: ["Qua, 08:00", "Qua, 11:00"],
+      },
       {
         id: 6,
         nome: "Dra. Laura Ferreira",
         especialidade: "Cirurgia Cardíaca",
+        horariosDisponiveis: ["Qua, 08:00", "Qua, 11:00"],
       },
     ],
     diferenciais: [
@@ -132,8 +159,18 @@ export const clinicasMock: ClinicaPaciente[] = [
       "Sábado, das 08:00 às 12:00",
     ],
     medicos: [
-      { id: 7, nome: "Dra. Beatriz Lima", especialidade: "Cardiologia" },
-      { id: 8, nome: "Dr. Felipe Rocha", especialidade: "Pneumologia" },
+      {
+        id: 7,
+        nome: "Dra. Beatriz Lima",
+        especialidade: "Cardiologia",
+        horariosDisponiveis: ["Qui, 09:00", "Qui, 14:00"],
+      },
+      {
+        id: 8,
+        nome: "Dr. Felipe Rocha",
+        especialidade: "Pneumologia",
+        horariosDisponiveis: ["Qui, 09:00", "Qui, 14:00"],
+      },
     ],
     diferenciais: [
       "Ambiente acolhedor",
