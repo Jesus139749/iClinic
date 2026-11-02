@@ -1,19 +1,20 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../screens/Home/HomeScreen';
-import LoginScreen from '../screens/Login/LoginScreen';
-import CadastroPacienteScreen from '../screens/Paciente/Cadastro/CadastroPacienteScreen';
-import CadastroClinicaScreen from '../screens/Clinica/Cadastro/CadastroClinicaScreen';
-import { Header } from '../components/Header';
-import MedicoFormScreen from '../screens/Clinica/Medicos/MedicoFormScreen';
-import ClinicaTabRoutes from '../screens/Clinica/tabs/clinicatab.routes';
-import PacienteTabRoutes from '../screens/Paciente/tabs/pacientetab.routes';
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import HomeScreen from "../screens/Home/HomeScreen";
+import LoginScreen from "../screens/Login/LoginScreen";
+import CadastroPacienteScreen from "../screens/Paciente/Cadastro/CadastroPacienteScreen";
+import CadastroClinicaScreen from "../screens/Clinica/Cadastro/CadastroClinicaScreen";
+import { Header } from "../components/Header";
+import MedicoFormScreen from "../screens/Clinica/Medicos/MedicoFormScreen";
+import ClinicaTabRoutes from "../screens/Clinica/tabs/clinicatab.routes";
+import AgendamentoStackRoutes from "../screens/Paciente/Agendamento/AgendamentoStackRoutes";
+import PacienteTabRoutes from "../screens/Paciente/tabs/pacientetab.routes";
+import type { RootStackParamList } from "./navigationTypes";
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppRoutes() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-
       <Stack.Screen name="Home" component={HomeScreen} />
 
       <Stack.Screen name="Login" component={LoginScreen} />
@@ -23,16 +24,18 @@ export default function AppRoutes() {
         component={CadastroPacienteScreen}
         options={{
           headerShown: true,
-          header: () => <Header />
-        }} />
+          header: () => <Header />,
+        }}
+      />
 
       <Stack.Screen
         name="CadastroClinica"
         component={CadastroClinicaScreen}
         options={{
           headerShown: true,
-          header: () => <Header />
-        }} />
+          header: () => <Header />,
+        }}
+      />
 
       <Stack.Screen
         name="DashboardPaciente"
@@ -40,31 +43,41 @@ export default function AppRoutes() {
         options={{
           headerShown: true,
           header: () => <Header />,
-        }} />
+        }}
+      />
+
+      <Stack.Screen
+        name="Agendamento"
+        component={AgendamentoStackRoutes}
+        options={{ headerShown: false }}
+      />
 
       <Stack.Screen
         name="DashboardClinica"
         component={ClinicaTabRoutes}
         options={{
           headerShown: true,
-          header: () => <Header />
-        }} />
+          header: () => <Header />,
+        }}
+      />
 
       <Stack.Screen
         name="CadastroMedico"
         component={MedicoFormScreen}
         options={{
           headerShown: true,
-          header: () => <Header />
-        }} />
+          header: () => <Header />,
+        }}
+      />
 
       <Stack.Screen
         name="EditarMedico"
         component={MedicoFormScreen}
         options={{
           headerShown: true,
-          header: () => <Header />
-        }} />
+          header: () => <Header />,
+        }}
+      />
     </Stack.Navigator>
   );
 }
