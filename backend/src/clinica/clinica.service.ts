@@ -12,9 +12,27 @@ import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/guards/jwt-auth.guard';
 import { ChangePasswordDto } from '../paciente/dto/change-password.dto';
 import { detectImageMimeType } from '../paciente/paciente.service';
+import {
+  ClinicaDetalhe,
+  ClinicaListItem,
+} from './dto/clinica-publica-response.interface';
 import { ClinicaResponse } from './dto/clinica-response.interface';
 import { CreateClinicaDto } from './dto/create-clinica.dto';
 import { UpdateClinicaProfileDto } from './dto/update-clinica-profile.dto';
+
+const publicClinicInclude = {
+  user: true,
+  specialties: { orderBy: { name: 'asc' } },
+  doctors: {
+    where: { active: true },
+    orderBy: { name: 'asc' },
+    include: { specialties: { orderBy: { name: 'asc' } } },
+  },
+} satisfies Prisma.ClinicInclude;
+
+type PublicClinic = Prisma.ClinicGetPayload<{
+  include: typeof publicClinicInclude;
+}>;
 
 @Injectable()
 export class ClinicaService {
@@ -219,6 +237,61 @@ export class ClinicaService {
       where: { id: user.sub },
       data: { passwordHash },
     });
+  }
+
+  async listPublic(search?: string): Promise<ClinicaListItem[]> {
+    const term = search?.trim();
+    const clinics = await this.prisma.clinic.findMany({
+      where: term
+        ? {
+            OR: [
+              { user: { name: { contains: term, mode: 'insensitive' } } },
+              {
+                specialties: {
+                  some: { name: { contains: term, mode: 'insensitive' } },
+                },
+              },
+            ],
+          }
+        : undefined,
+      include: publicClinicInclude,
+      orderBy: { user: { name: 'asc' } },
+    });
+
+    return clinics.map((clinic) => this.toListItem(clinic));
+  }
+
+  async findPublic(id: number): Promise<ClinicaDetalhe> {
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id },
+      include: publicClinicInclude,
+    });
+
+    if (!clinic) {
+      throw new NotFoundException('Clínica não encontrada');
+    }
+
+    return {
+      ...this.toListItem(clinic),
+      phone: clinic.user.phone,
+      doctors: clinic.doctors.map((doctor) => ({
+        id: doctor.id,
+        name: doctor.name,
+        image: this.toDataUri(doctor.image),
+        specialties: doctor.specialties.map((s) => s.name),
+      })),
+    };
+  }
+
+  private toListItem(clinic: PublicClinic): ClinicaListItem {
+    const { street, number, neighborhood, city, state } = clinic;
+    return {
+      id: clinic.id,
+      name: clinic.user.name,
+      image: this.toDataUri(clinic.user.image),
+      address: `${street}, ${number} - ${neighborhood}, ${city}/${state}`,
+      specialties: clinic.specialties.map((s) => s.name),
+    };
   }
 
   private toResponse(

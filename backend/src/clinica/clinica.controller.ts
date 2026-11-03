@@ -2,9 +2,12 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseIntPipe,
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -33,8 +36,13 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { ChangePasswordDto } from '../paciente/dto/change-password.dto';
 import { MAX_IMAGE_SIZE_BYTES } from '../paciente/paciente.service';
 import { ClinicaService } from './clinica.service';
+import {
+  ClinicaDetalhe,
+  ClinicaListItem,
+} from './dto/clinica-publica-response.interface';
 import { ClinicaResponse } from './dto/clinica-response.interface';
 import { CreateClinicaDto } from './dto/create-clinica.dto';
+import { SearchClinicaQueryDto } from './dto/search-clinica-query.dto';
 import { UpdateClinicaProfileDto } from './dto/update-clinica-profile.dto';
 
 @ApiTags('Clinica')
@@ -75,6 +83,20 @@ export class ClinicaController {
   @ApiNotFoundResponse({ description: 'Clínica não encontrada.' })
   getMine(@Req() request: AuthenticatedRequest): Promise<ClinicaResponse> {
     return this.clinicaService.getMine(request.user);
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PACIENTE')
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido.' })
+  @ApiOperation({ summary: 'Listar clínicas cadastradas (paciente)' })
+  @ApiOkResponse({ description: 'Lista de clínicas.' })
+  @ApiForbiddenResponse({
+    description: 'Acesso permitido somente para pacientes.',
+  })
+  list(@Query() query: SearchClinicaQueryDto): Promise<ClinicaListItem[]> {
+    return this.clinicaService.listPublic(query.search);
   }
 
   @Patch('me')
@@ -156,5 +178,20 @@ export class ClinicaController {
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<void> {
     return this.clinicaService.changePassword(request.user, changePasswordDto);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('PACIENTE')
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({ description: 'Token JWT ausente ou inválido.' })
+  @ApiOperation({ summary: 'Consultar os detalhes de uma clínica (paciente)' })
+  @ApiOkResponse({ description: 'Dados da clínica, especialidades e médicos.' })
+  @ApiForbiddenResponse({
+    description: 'Acesso permitido somente para pacientes.',
+  })
+  @ApiNotFoundResponse({ description: 'Clínica não encontrada.' })
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<ClinicaDetalhe> {
+    return this.clinicaService.findPublic(id);
   }
 }
