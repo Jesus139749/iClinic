@@ -8,10 +8,10 @@ import { MedicoModule } from './medico/medico.module';
 @Module({
   imports: [
     PrismaModule,
+    MedicoModule,
     ClinicaModule,
     AuthModule,
     PacienteModule,
-    MedicoModule,
   ],
   controllers: [],
   providers: [],
