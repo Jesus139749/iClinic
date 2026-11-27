@@ -1,52 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { CompositeNavigationProp } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
-import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type {
-  RootStackParamList,
-  PacienteTabParamList,
-} from "../../../routes/navigationTypes";
+import { Loading } from "../../../components/Feedback";
 import { getRequestErrorMessage } from "../../../services/apiClient";
-import type { ClinicListItem } from "../../../services/clinicSearchService";
-import { listClinics } from "../../../services/clinicSearchService";
+import { listClinics, type ClinicListItem } from "../../../services/clinicSearchService";
+import type { ClinicCardProps } from "./interfaces/ClinicCardProps";
+import type { SearchNavigation } from "./interfaces/SearchNavigation";
 
-type BuscarNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<PacienteTabParamList, "Buscar">,
-  NativeStackNavigationProp<RootStackParamList>
->;
-
-function ClinicaBuscaCard({
-  clinica,
-  onPress,
-}: {
-  clinica: ClinicListItem;
-  onPress: () => void;
-}) {
+function ClinicCard({ clinic, onPress }: ClinicCardProps) {
   return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Ver detalhes de ${clinica.name}`}
+      accessibilityLabel={`Ver detalhes de ${clinic.name}`}
       onPress={onPress}
       className="mb-4 flex-row rounded-2xl border border-slate-200 bg-white p-3"
     >
-      {clinica.image ? (
-        <Image
-          source={{ uri: clinica.image }}
-          className="h-16 w-16 rounded-xl bg-slate-200"
-          resizeMode="cover"
-        />
+      {clinic.image ? (
+        <Image source={{ uri: clinic.image }} className="h-16 w-16 rounded-xl bg-slate-200" resizeMode="cover" />
       ) : (
         <View className="h-16 w-16 items-center justify-center rounded-xl bg-slate-200">
           <Ionicons name="medkit-outline" size={26} color="#64748B" />
@@ -54,116 +25,86 @@ function ClinicaBuscaCard({
       )}
 
       <View className="ml-3 flex-1">
-        <Text className="text-base font-bold text-slate-800">
-          {clinica.name}
-        </Text>
-
-        {clinica.specialties.length > 0 && (
-          <Text className="mt-0.5 text-xs text-slate-500">
-            {clinica.specialties.join(" · ")}
-          </Text>
-        )}
-
-        <Text className="mt-0.5 text-xs text-slate-500">
-          {clinica.address}
-        </Text>
+        <Text className="text-base font-bold text-slate-800">{clinic.name}</Text>
+        {clinic.specialties.length > 0 ? (
+          <Text className="mt-0.5 text-xs text-slate-500">{clinic.specialties.join(" · ")}</Text>
+        ) : null}
+        <Text className="mt-0.5 text-xs text-slate-500">{clinic.address}</Text>
       </View>
     </Pressable>
   );
 }
 
-export default function BuscarPacienteScreen() {
-  const [busca, setBusca] = useState("");
-  const [clinicas, setClinicas] = useState<ClinicListItem[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
-  const navigation = useNavigation<BuscarNavigationProp>();
+export default function BuscarScreen() {
+  const navigation = useNavigation<SearchNavigation>();
+  const [search, setSearch] = useState("");
+  const [clinics, setClinics] = useState<ClinicListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Espera o usuário parar de digitar (300 ms) antes de consultar a API.
   useEffect(() => {
-    let cancelado = false;
-    setCarregando(true);
+    let current = true;
+    setLoading(true);
 
-    // Debounce para não consultar a API a cada tecla digitada.
-    const timer = setTimeout(async () => {
-      try {
-        const resultado = await listClinics(busca);
-        if (!cancelado) {
-          setClinicas(resultado);
-          setErro(null);
-        }
-      } catch (error) {
-        if (!cancelado) {
-          setErro(getRequestErrorMessage(error));
-        }
-      } finally {
-        if (!cancelado) {
-          setCarregando(false);
-        }
-      }
+    const timer = setTimeout(() => {
+      listClinics(search)
+        .then((result) => {
+          if (!current) return;
+          setClinics(result);
+          setError(null);
+        })
+        .catch((e) => current && setError(getRequestErrorMessage(e)))
+        .finally(() => current && setLoading(false));
     }, 300);
 
     return () => {
-      cancelado = true;
+      current = false;
       clearTimeout(timer);
     };
-  }, [busca]);
+  }, [search]);
+
+  function openClinic(clinic: ClinicListItem) {
+    navigation.navigate("Agendamento", {
+      screen: "DetalhesClinica",
+      params: { clinicId: clinic.id },
+    });
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={[]}>
-      <ScrollView
-        className="flex-1 px-6"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View className="mt-3 h-12 flex-row items-center rounded-xl border border-slate-200 bg-white px-4">
           <Ionicons name="search" size={18} color="#94A3B8" />
           <TextInput
-            value={busca}
-            onChangeText={setBusca}
+            value={search}
+            onChangeText={setSearch}
             placeholder="Buscar clínica ou especialidade..."
             placeholderTextColor="#94A3B8"
             className="ml-2 flex-1 text-sm"
           />
-          {busca.length > 0 && (
-            <Pressable onPress={() => setBusca("")} hitSlop={8}>
+          {search ? (
+            <Pressable onPress={() => setSearch("")} hitSlop={8} accessibilityLabel="Limpar busca">
               <Ionicons name="close-circle" size={18} color="#94A3B8" />
             </Pressable>
-          )}
+          ) : null}
         </View>
 
-        <View className="mb-3 mt-4 flex-row items-center justify-end">
-          {!carregando && !erro && (
-            <Text className="text-xs text-slate-400">
-              {clinicas.length} resultados
-            </Text>
-          )}
-        </View>
-
-        {carregando && <ActivityIndicator className="mt-10" color="#2F80ED" />}
-
-        {!carregando && erro && (
-          <Text className="mt-10 text-center text-red-500">{erro}</Text>
-        )}
-
-        {!carregando &&
-          !erro &&
-          clinicas.map((clinica) => (
-            <ClinicaBuscaCard
-              key={clinica.id}
-              clinica={clinica}
-              onPress={() =>
-                navigation.navigate("Agendamento", {
-                  screen: "DetalhesClinica",
-                  params: { clinicaId: clinica.id },
-                })
-              }
-            />
-          ))}
-
-        {!carregando && !erro && clinicas.length === 0 && (
-          <Text className="mt-10 text-center text-slate-400">
-            Nenhuma clínica encontrada.
-          </Text>
+        {loading ? (
+          <Loading />
+        ) : error ? (
+          <Text className="mt-10 text-center text-red-500">{error}</Text>
+        ) : (
+          <>
+            <Text className="mb-3 mt-4 text-right text-xs text-slate-400">{clinics.length} resultados</Text>
+            {clinics.length === 0 ? (
+              <Text className="mt-10 text-center text-slate-400">Nenhuma clínica encontrada.</Text>
+            ) : (
+              clinics.map((clinic) => (
+                <ClinicCard key={clinic.id} clinic={clinic} onPress={() => openClinic(clinic)} />
+              ))
+            )}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

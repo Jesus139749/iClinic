@@ -1,9 +1,9 @@
 import { Text, View } from "react-native";
 
-export const AgendaScreen = () => {
+export function AgendaScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-white">
-        <Text className="text-lg font-semibold text-gray-800">Minha agenda</Text>
+      <Text className="text-lg font-semibold text-gray-800">Minha agenda</Text>
     </View>
   );
 }

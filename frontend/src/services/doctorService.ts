@@ -1,7 +1,4 @@
-import { File } from "expo-file-system";
-import { Platform } from "react-native";
-import { request } from "./apiClient";
-import { ProfileImageFile } from "./profileService";
+import { imageFormData, request, type ImageFile } from "./apiClient";
 
 export interface Specialty {
   id: number;
@@ -105,23 +102,8 @@ export function updateDoctor(
   return requestDoctor("PATCH", `/clinica/medicos/${id}`, input);
 }
 
-export async function updateDoctorImage(
-  id: number,
-  image: ProfileImageFile,
-): Promise<Doctor> {
-  const mimeType = image.mimeType ?? "image/jpeg";
-  const extension = mimeType.split("/")[1] ?? "jpg";
-  const fileName = image.fileName ?? `medico.${extension}`;
-  const formData = new FormData();
-
-  if (Platform.OS === "web") {
-    // No web o FormData exige um Blob.
-    formData.append("image", await (await fetch(image.uri)).blob(), fileName);
-  } else {
-    formData.append("image", new File(image.uri), fileName);
-  }
-
-  return requestDoctor("PUT", `/clinica/medicos/${id}/image`, formData);
+export async function updateDoctorImage(id: number, image: ImageFile): Promise<Doctor> {
+  return requestDoctor("PUT", `/clinica/medicos/${id}/image`, await imageFormData(image, "medico"));
 }
 
 export async function listSpecialties(): Promise<SpecialtyWithCount[]> {

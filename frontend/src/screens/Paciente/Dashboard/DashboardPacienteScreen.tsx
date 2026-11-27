@@ -1,37 +1,43 @@
-import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { QuickActionPaciente } from './components/QuickActionPaciente';
-import { ClinicaCardPaciente, ClinicaCardPacienteProps } from './components/ClinicaCardPaciente';
-import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from "@expo/vector-icons";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import type { PatientTabParamList } from "../../../routes/navigationTypes";
+import { PatientClinicCard } from "./components/ClinicaCardPaciente";
+import type { PatientClinicCardProps } from "./components/interfaces/PatientClinicCardProps";
+import { PatientQuickAction } from "./components/QuickActionPaciente";
 
-const especialidades = ['Clínico Geral', 'Dermatologia', 'Ortopedia', 'Cardiologia', 'Pediatria'];
+// Dados fictícios até o backend expor recomendações.
+const popularSpecialties = ["Clínico Geral", "Dermatologia", "Ortopedia", "Cardiologia", "Pediatria"];
 
-const clinicasRecomendadas: ClinicaCardPacienteProps[] = [
+const recommendedClinics: PatientClinicCardProps[] = [
   {
-    name: 'Clínica Vida Plena',
-    imageUrl: 'https://placehold.co/80x80',
+    name: "Clínica Vida Plena",
+    imageUrl: "https://placehold.co/80x80",
     distanceKm: 1.2,
-    hours: '08h-20h',
+    hours: "08h-20h",
     rating: 4.8,
-    specialties: ['Clínico Geral', 'Dermatologia', 'Ortopedia'],
-    nextAvailable: 'Hoje, 14:30',
-    actionLabel: 'Ver Detalhes',
+    specialties: ["Clínico Geral", "Dermatologia", "Ortopedia"],
+    nextAvailable: "Hoje, 14:30",
+    actionLabel: "Ver Detalhes",
   },
   {
-    name: 'Centro Médico São Lucas',
-    imageUrl: 'https://placehold.co/80x80',
+    name: "Centro Médico São Lucas",
+    imageUrl: "https://placehold.co/80x80",
     distanceKm: 2.8,
-    hours: '07h-19h',
+    hours: "07h-19h",
     rating: 4.6,
-    specialties: ['Cardiologia', 'Pediatria'],
-    nextAvailable: 'Amanhã, 09:00',
-    actionLabel: 'Ver Detalhes',
+    specialties: ["Cardiologia", "Pediatria"],
+    nextAvailable: "Amanhã, 09:00",
+    actionLabel: "Ver Detalhes",
   },
 ];
 
 export default function DashboardPacienteScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<BottomTabNavigationProp<PatientTabParamList>>();
+  const goToSearch = () => navigation.navigate("Buscar");
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
@@ -45,7 +51,7 @@ export default function DashboardPacienteScreen() {
             placeholder="Buscar clínica ou especialidade..."
             placeholderTextColor="#94A3B8"
             className="ml-2 flex-1 text-sm"
-            onFocus={() => navigation.navigate('Buscar' as never)}
+            onFocus={goToSearch}
           />
         </View>
 
@@ -55,17 +61,16 @@ export default function DashboardPacienteScreen() {
         </View>
 
         <View className="mt-3 flex-row gap-3">
-          <QuickActionPaciente icon="location-outline" label="Clínicas Próximas" onPress={() => navigation.navigate('Buscar' as never)} />
-          <QuickActionPaciente icon="calendar-outline" label="Minhas Consultas" onPress={() => navigation.navigate('Consultas' as never)} />
-          <QuickActionPaciente icon="medkit-outline" label="Especialidades" onPress={() => navigation.navigate('Buscar' as never)} />
+          <PatientQuickAction icon="location-outline" label="Clínicas Próximas" onPress={goToSearch} />
+          <PatientQuickAction icon="calendar-outline" label="Minhas Consultas" onPress={() => navigation.navigate("Consultas")} />
+          <PatientQuickAction icon="medkit-outline" label="Especialidades" onPress={goToSearch} />
         </View>
 
         <Text className="mt-6 text-sm font-bold text-slate-800">Especialidades Populares</Text>
-
         <View className="mt-3 flex-row flex-wrap gap-3">
-          {especialidades.map((esp) => (
-            <TouchableOpacity key={esp} onPress={() => navigation.navigate('Buscar' as never,)}>
-               <Text className="text-sm font-semibold text-blue-500">{esp}</Text>
+          {popularSpecialties.map((specialty) => (
+            <TouchableOpacity key={specialty} onPress={goToSearch}>
+              <Text className="text-sm font-semibold text-blue-500">{specialty}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -74,10 +79,9 @@ export default function DashboardPacienteScreen() {
           <Text className="text-sm font-bold text-slate-800">Clínicas Recomendadas</Text>
           <Text className="text-sm font-semibold text-blue-500">Ver mais</Text>
         </View>
-
         <View className="mt-3">
-          {clinicasRecomendadas.map((clinica) => (
-            <ClinicaCardPaciente key={clinica.name} {...clinica} />
+          {recommendedClinics.map((clinic) => (
+            <PatientClinicCard key={clinic.name} {...clinic} />
           ))}
         </View>
       </ScrollView>

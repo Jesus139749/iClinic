@@ -1,23 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Text, View } from "react-native";
+import type { DoctorAvatarProps } from "./interfaces/DoctorAvatarProps";
 
-interface MedicoAvatarProps {
-  uri: string | null;
-  name: string;
-  size?: number;
-}
-
+/** Iniciais do primeiro e do último nome, ignorando "Dr."/"Dra.". */
 function getInitials(name: string): string {
-  const parts = name
-    .replace(/^(dr|dra)\.?\s+/i, "")
-    .split(/\s+/)
-    .filter(Boolean);
-
-  return (parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "");
+  const parts = name.replace(/^(dr|dra)\.?\s+/i, "").split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase();
 }
 
-export function MedicoAvatar({ uri, name, size = 56 }: MedicoAvatarProps) {
-  const initials = getInitials(name).toUpperCase();
+export function DoctorAvatar({ uri, name, size = 56 }: DoctorAvatarProps) {
+  const initials = getInitials(name);
 
   return (
     <View

@@ -1,7 +1,5 @@
-import { File } from "expo-file-system";
-import { Platform } from "react-native";
-import { request } from "./apiClient";
-import { ChangePatientPassword, ProfileImageFile } from "./profileService";
+import { imageFormData, request, type ImageFile } from "./apiClient";
+import type { ChangePassword } from "./profileService";
 
 export interface ClinicProfile {
   name: string;
@@ -60,26 +58,10 @@ export function updateMyClinicProfile(
   return requestProfile("PATCH", "/clinica/me", profile);
 }
 
-export async function updateMyClinicImage(
-  image: ProfileImageFile,
-): Promise<ClinicProfile> {
-  const mimeType = image.mimeType ?? "image/jpeg";
-  const extension = mimeType.split("/")[1] ?? "jpg";
-  const fileName = image.fileName ?? `perfil.${extension}`;
-  const formData = new FormData();
-
-  if (Platform.OS === "web") {
-    // No web o FormData exige um Blob.
-    formData.append("image", await (await fetch(image.uri)).blob(), fileName);
-  } else {
-    formData.append("image", new File(image.uri), fileName);
-  }
-
-  return requestProfile("PUT", "/clinica/me/image", formData);
+export async function updateMyClinicImage(image: ImageFile): Promise<ClinicProfile> {
+  return requestProfile("PUT", "/clinica/me/image", await imageFormData(image, "perfil"));
 }
 
-export async function changeMyClinicPassword(
-  password: ChangePatientPassword,
-): Promise<void> {
+export async function changeMyClinicPassword(password: ChangePassword): Promise<void> {
   await request("PUT", "/clinica/me/password", password);
 }

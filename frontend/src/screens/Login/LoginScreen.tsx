@@ -1,75 +1,37 @@
-import { useRef, useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useState } from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { TextInputStyled } from "../../components/TextInputStyled";
+import type { RootStackParamList } from "../../routes/navigationTypes";
+import { getRequestErrorMessage } from "../../services/apiClient";
+import { login } from "../../services/authService";
 import { saveAuthToken } from "../../services/authTokenStorage";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-type LoginResponse = {
-  token: string;
-  role: "PACIENTE" | "CLINICA";
-};
-
 export default function LoginScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-  const navigation = useNavigation();
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  async function handleEntrar() {
-
-    setSubmitError("");
-
-    if (!email.trim() || !senha) {
-      setSubmitError("Informe seu e-mail e sua senha para entrar.");
+  async function handleLogin() {
+    if (!email.trim() || !password) {
+      setError("Informe seu e-mail e sua senha para entrar.");
       return;
     }
 
-    setIsSubmitting(true);
-
+    setError("");
+    setSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim(),
-          password: senha,
-        }),
-      });
-
-      if (!response.ok) {
-        const { message } = (await response.json()) as {
-          message: string | string[];
-        };
-        setSubmitError(Array.isArray(message) ? message.join("\n") : message);
-        return;
-      }
-
-      const result: LoginResponse = await response.json();
-
-      try {
-        await saveAuthToken(result.token);
-      } catch {
-        setSubmitError(
-          "Não foi possível armazenar sua sessão com segurança neste dispositivo.",
-        );
-        return;
-      }
-
-      if (result.role === "PACIENTE") {
-        navigation.navigate("DashboardPaciente" as never);
-      } else {
-        navigation.navigate("DashboardClinica" as never);
-      }
-    } catch {
-      setSubmitError(
-        "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
-      );
+      const { token, role } = await login(email.trim(), password);
+      await saveAuthToken(token);
+      navigation.navigate(role === "PACIENTE" ? "DashboardPaciente" : "DashboardClinica");
+    } catch (e) {
+      setError(getRequestErrorMessage(e));
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   }
 
@@ -88,11 +50,10 @@ export default function LoginScreen() {
         autoCapitalize="none"
         keyboardType="email-address"
       />
-
       <TextInputStyled
         label="Senha"
-        value={senha}
-        onChangeText={setSenha}
+        value={password}
+        onChangeText={setPassword}
         placeholder="Digite sua senha"
         autoCapitalize="none"
         secureTextEntry
@@ -103,27 +64,17 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={handleEntrar}
-        disabled={isSubmitting}
-        accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
-        className="h-14 items-center justify-center rounded-xl bg-blue-500"
+        onPress={handleLogin}
+        disabled={submitting}
+        className="h-14 flex-row items-center justify-center gap-2 rounded-xl bg-blue-500"
       >
-        {isSubmitting ? (
-          <View className="flex-row items-center gap-2">
-            <ActivityIndicator color="#FFFFFF" />
-            <Text className="text-base font-bold text-white">Entrando...</Text>
-          </View>
-        ) : (
-          <Text className="text-base font-bold text-white">Entrar</Text>
-        )}
+        {submitting ? <ActivityIndicator color="#FFFFFF" /> : null}
+        <Text className="text-base font-bold text-white">{submitting ? "Entrando..." : "Entrar"}</Text>
       </TouchableOpacity>
 
-      {submitError ? (
-        <Text
-          accessibilityRole="alert"
-          className="mt-3 text-center text-sm text-red-500"
-        >
-          {submitError}
+      {error ? (
+        <Text accessibilityRole="alert" className="mt-3 text-center text-sm text-red-500">
+          {error}
         </Text>
       ) : null}
 
@@ -134,23 +85,19 @@ export default function LoginScreen() {
 
         <View className="flex-row gap-3">
           <TouchableOpacity
-            onPress={() => navigation.navigate("CadastroPaciente" as never)}
+            onPress={() => navigation.navigate("CadastroPaciente")}
             className="h-14 flex-1 flex-row items-center justify-center rounded-xl border border-[#3182E8] bg-[#3182E8]"
           >
             <Ionicons name="person-outline" size={21} color="#FFFFFF" />
-            <Text className="ml-2 text-base font-medium text-white">
-              Paciente
-            </Text>
+            <Text className="ml-2 text-base font-medium text-white">Paciente</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("CadastroClinica" as never)}
+            onPress={() => navigation.navigate("CadastroClinica")}
             className="h-14 flex-1 flex-row items-center justify-center rounded-xl border border-[#E0E4EA] bg-white"
           >
             <Ionicons name="home" size={20} color="#000000" />
-            <Text className="ml-2 text-base font-medium text-[#333333]">
-              Clínica
-            </Text>
+            <Text className="ml-2 text-base font-medium text-[#333333]">Clínica</Text>
           </TouchableOpacity>
         </View>
       </View>

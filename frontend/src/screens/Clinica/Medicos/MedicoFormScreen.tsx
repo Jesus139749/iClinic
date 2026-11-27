@@ -1,25 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import {
-  useNavigation,
-  useRoute,
-  type NavigationProp,
-  type ParamListBase,
-  type RouteProp,
-} from "@react-navigation/native";
-import * as ImagePicker from "expo-image-picker";
-import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useNavigation, useRoute, type NavigationProp, type ParamListBase } from "@react-navigation/native";
+import { useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 import MaskInput, { Masks } from "react-native-mask-input";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Button } from "../../../components/Button";
+import { Chip } from "../../../components/Chip";
+import { ErrorBox, Loading } from "../../../components/Feedback";
+import { useLoad } from "../../../hooks/useLoad";
 import { getRequestErrorMessage } from "../../../services/apiClient";
 import {
   createDoctor,
@@ -28,260 +16,141 @@ import {
   listSpecialties,
   updateDoctor,
   updateDoctorImage,
-  type Doctor,
   type SpecialtyWithCount,
 } from "../../../services/doctorService";
-import { MedicoAvatar } from "./components/MedicoAvatar";
+import { pickPhoto, type Photo } from "../../../utils/pickImage";
+import { DoctorAvatar } from "./components/MedicoAvatar";
+import type { DoctorForm } from "./interfaces/DoctorForm";
+import type { DoctorFormRoute } from "./interfaces/DoctorFormRoute";
 
-type MedicoFormRoute = RouteProp<{
-  MedicoForm: { medicoId?: number } | undefined;
-}>;
+const INPUT = "rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-800";
 
-const INPUT_CLASS =
-  "rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-800";
+function validate(form: DoctorForm): string | null {
+  if (!form.name.trim()) return "Informe o nome do médico.";
+  if (!form.crm.trim()) return "Informe o CRM do médico.";
+  if (form.phone && form.phone.length !== 11) return "O telefone deve ter 11 dígitos (DDD + número).";
+  if (form.specialtyIds.length === 0) return "Selecione ao menos uma especialidade.";
+  return null;
+}
+
+function sortByName<T extends { name: string }>(list: T[]): T[] {
+  return [...list].sort((a, b) => a.name.localeCompare(b.name));
+}
 
 export default function MedicoFormScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
-  const route = useRoute<MedicoFormRoute>();
-  const medicoId = route.params?.medicoId;
-  const isEditing = medicoId !== undefined;
+  const doctorId = useRoute<DoctorFormRoute>().params?.doctorId;
+  const isEditing = doctorId !== undefined;
 
-  const [name, setName] = useState("");
-  const [crm, setCrm] = useState("");
-  const [phone, setPhone] = useState("");
-  const [active, setActive] = useState(true);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [form, setForm] = useState<DoctorForm>({ name: "", crm: "", phone: "", active: true, specialtyIds: [] });
   const [specialties, setSpecialties] = useState<SpecialtyWithCount[]>([]);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  // Foto escolhida mas ainda não enviada ao servidor.
-  const [pendingPhoto, setPendingPhoto] =
-    useState<ImagePicker.ImagePickerAsset | null>(null);
-
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<Photo | null>(null); // enviada só ao salvar
   const [newSpecialty, setNewSpecialty] = useState("");
-  const [isAddingSpecialty, setIsAddingSpecialty] = useState(false);
+  const [addingSpecialty, setAddingSpecialty] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loadAttempt, setLoadAttempt] = useState(0);
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    async function load() {
-      try {
-        const [loadedSpecialties, doctor] = await Promise.all([
-          listSpecialties(),
-          isEditing ? getDoctor(medicoId) : Promise.resolve<Doctor | null>(null),
-        ]);
-        if (!isCurrent) return;
-
-        setSpecialties(loadedSpecialties);
-        if (doctor) {
-          setName(doctor.name);
-          setCrm(doctor.crm);
-          setPhone(doctor.phone ?? "");
-          setActive(doctor.active);
-          setPhotoUri(doctor.image);
-          setSelectedIds(doctor.specialties.map((item) => item.id));
-        }
-        setLoadError(null);
-      } catch (error) {
-        if (isCurrent) setLoadError(getRequestErrorMessage(error));
-      } finally {
-        if (isCurrent) setIsLoading(false);
-      }
+  const { loading, error, reload } = useLoad(async () => {
+    const [specialtyList, doctor] = await Promise.all([
+      listSpecialties(),
+      isEditing ? getDoctor(doctorId) : null,
+    ]);
+    setSpecialties(specialtyList);
+    if (doctor) {
+      setForm({
+        name: doctor.name,
+        crm: doctor.crm,
+        phone: doctor.phone ?? "",
+        active: doctor.active,
+        specialtyIds: doctor.specialties.map((s) => s.id),
+      });
+      setPhoto(doctor.image);
     }
-
-    void load();
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [isEditing, medicoId, loadAttempt]);
+  }, [doctorId]);
 
   function toggleSpecialty(id: number) {
-    setSelectedIds((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id],
-    );
+    setForm((current) => ({
+      ...current,
+      specialtyIds: current.specialtyIds.includes(id)
+        ? current.specialtyIds.filter((item) => item !== id)
+        : [...current.specialtyIds, id],
+    }));
   }
 
   async function addSpecialty() {
-    const value = newSpecialty.trim();
-    if (!value) return;
+    const name = newSpecialty.trim();
+    if (!name) return;
 
-    setIsAddingSpecialty(true);
+    setAddingSpecialty(true);
     try {
-      const created = await createSpecialty(value);
-      setSpecialties((current) =>
-        [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
-      );
-      setSelectedIds((current) => [...current, created.id]);
+      const created = await createSpecialty(name);
+      setSpecialties((current) => sortByName([...current, created]));
+      setForm((current) => ({ ...current, specialtyIds: [...current.specialtyIds, created.id] }));
       setNewSpecialty("");
-    } catch (error) {
-      Alert.alert(
-        "Não foi possível adicionar a especialidade",
-        getRequestErrorMessage(error),
-      );
+    } catch (e) {
+      Alert.alert("Não foi possível adicionar a especialidade", getRequestErrorMessage(e));
     } finally {
-      setIsAddingSpecialty(false);
+      setAddingSpecialty(false);
     }
   }
 
-  async function selectPhoto(source: "camera" | "gallery") {
-    try {
-      const permission =
-        source === "camera"
-          ? await ImagePicker.requestCameraPermissionsAsync()
-          : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permission.granted) {
-        Alert.alert(
-          "Permissão necessária",
-          source === "camera"
-            ? "Permita o acesso à câmera para tirar uma foto."
-            : "Permita o acesso às fotos para escolher uma imagem.",
-        );
-        return;
-      }
-
-      const options: ImagePicker.ImagePickerOptions = {
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      };
-      const result =
-        source === "camera"
-          ? await ImagePicker.launchCameraAsync(options)
-          : await ImagePicker.launchImageLibraryAsync(options);
-
-      const selected = result.canceled ? undefined : result.assets[0];
-      if (selected) {
-        // A foto só é enviada ao salvar, junto com os demais dados.
-        setPendingPhoto(selected);
-        setPhotoUri(selected.uri);
-      }
-    } catch (error) {
-      Alert.alert(
-        "Não foi possível selecionar a foto",
-        error instanceof Error ? error.message : "Tente novamente.",
-      );
-    }
+  async function selectPhoto() {
+    const newPhoto = await pickPhoto("Foto do médico");
+    if (!newPhoto) return;
+    setPendingPhoto(newPhoto);
+    setPhoto(newPhoto.uri);
   }
 
-  function showPhotoOptions() {
-    Alert.alert("Foto do médico", "Escolha uma opção", [
-      { text: "Tirar foto", onPress: () => void selectPhoto("camera") },
-      {
-        text: "Escolher da galeria",
-        onPress: () => void selectPhoto("gallery"),
-      },
-      { text: "Cancelar", style: "cancel" },
-    ]);
-  }
-
-  function validate(): string | null {
-    if (!name.trim()) return "Informe o nome do médico.";
-    if (!crm.trim()) return "Informe o CRM do médico.";
-    if (phone && phone.length !== 11) {
-      return "O telefone deve ter 11 dígitos (DDD + número).";
-    }
-    if (selectedIds.length === 0) {
-      return "Selecione ao menos uma especialidade.";
-    }
-    return null;
-  }
-
-  async function handleSave() {
-    if (isSaving) return;
-
-    const validationError = validate();
+  async function save() {
+    const validationError = validate(form);
     if (validationError) {
       Alert.alert("Dados incompletos", validationError);
       return;
     }
 
-    setIsSaving(true);
-    let saved: Doctor | undefined;
+    const data = {
+      name: form.name.trim(),
+      crm: form.crm.trim(),
+      phone: form.phone || undefined,
+      specialtyIds: form.specialtyIds,
+    };
 
+    setSaving(true);
+    let doctor;
     try {
-      saved = isEditing
-        ? await updateDoctor(medicoId, {
-            name: name.trim(),
-            crm: crm.trim(),
-            phone: phone || undefined,
-            specialtyIds: selectedIds,
-            active,
-          })
-        : await createDoctor({
-            name: name.trim(),
-            crm: crm.trim(),
-            phone: phone || undefined,
-            specialtyIds: selectedIds,
-          });
-    } catch (error) {
-      Alert.alert("Não foi possível salvar", getRequestErrorMessage(error));
-      setIsSaving(false);
+      doctor = isEditing
+        ? await updateDoctor(doctorId, { ...data, active: form.active })
+        : await createDoctor(data);
+    } catch (e) {
+      Alert.alert("Não foi possível salvar", getRequestErrorMessage(e));
+      setSaving(false);
       return;
     }
 
-    let photoFailed = false;
+    // O médico já foi salvo; uma falha na foto não desfaz o cadastro.
+    let message: string | undefined = `${doctor.name} ${isEditing ? "atualizado" : "cadastrado"} com sucesso!`;
     if (pendingPhoto) {
       try {
-        saved = await updateDoctorImage(saved.id, {
-          uri: pendingPhoto.uri,
-          mimeType: pendingPhoto.mimeType,
-          fileName: pendingPhoto.fileName,
-        });
-      } catch (error) {
-        photoFailed = true;
+        await updateDoctorImage(doctor.id, pendingPhoto);
+      } catch (e) {
+        message = undefined;
         Alert.alert(
           "Médico salvo, mas a foto não foi enviada",
-          `${getRequestErrorMessage(error)}\nEdite o médico para tentar novamente.`,
+          `${getRequestErrorMessage(e)}\nEdite o médico para tentar novamente.`,
         );
       }
     }
 
-    setIsSaving(false);
-
-    const mensagem = `${saved.name} ${isEditing ? "atualizado" : "cadastrado"} com sucesso!`;
-    navigation.navigate("DashboardClinica", {
-      screen: "Médicos",
-      params: { mensagem: photoFailed ? undefined : mensagem },
-    });
+    setSaving(false);
+    navigation.navigate("DashboardClinica", { screen: "Médicos", params: { message } });
   }
 
-  if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator color="#2F80ED" />
-      </SafeAreaView>
-    );
-  }
+  if (loading) return <Loading fullScreen />;
 
-  if (loadError) {
+  if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-50 px-4 pt-6" edges={[]}>
-        <View
-          className="rounded-xl border border-red-200 bg-red-50 p-3"
-          accessibilityRole="alert"
-        >
-          <Text className="text-sm text-red-700">{loadError}</Text>
-        </View>
-        <Pressable
-          onPress={() => {
-            setIsLoading(true);
-            setLoadAttempt((attempt) => attempt + 1);
-          }}
-          className="mt-3 h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
-        >
-          <Text className="text-sm font-bold text-blue-600">
-            Tentar novamente
-          </Text>
-        </Pressable>
+      <SafeAreaView className="flex-1 bg-slate-50 px-4 pt-2" edges={[]}>
+        <ErrorBox message={error} onRetry={reload} />
       </SafeAreaView>
     );
   }
@@ -298,98 +167,69 @@ export default function MedicoFormScreen() {
         </Text>
 
         <View className="mb-4 flex-row items-center rounded-2xl border border-slate-200 bg-white p-4">
-          <MedicoAvatar uri={photoUri} name={name} size={64} />
+          <DoctorAvatar uri={photo} name={form.name} size={64} />
           <View className="ml-4 flex-1">
-            <Text className="text-sm font-bold text-slate-800">
-              Foto do médico
-            </Text>
+            <Text className="text-sm font-bold text-slate-800">Foto do médico</Text>
             <Text className="text-xs text-slate-400">JPEG, PNG ou WebP, até 5 MB</Text>
           </View>
           <Pressable
-            onPress={showPhotoOptions}
-            className="h-9 w-9 items-center justify-center rounded-full bg-blue-50"
+            onPress={selectPhoto}
             accessibilityLabel="Alterar foto"
+            className="h-9 w-9 items-center justify-center rounded-full bg-blue-50"
           >
             <Ionicons name="camera-outline" size={18} color="#2F80ED" />
           </Pressable>
         </View>
 
         <View className="mb-4 rounded-2xl border border-slate-200 bg-white p-4">
-          <Text className="mb-3 text-base font-bold text-slate-800">
-            Dados do médico
-          </Text>
+          <Text className="mb-3 text-base font-bold text-slate-800">Dados do médico</Text>
 
           <Text className="mb-1 text-xs text-slate-400">Nome completo</Text>
           <TextInput
-            className={INPUT_CLASS}
+            className={INPUT}
             placeholder="Dra. Camila Ferreira"
             placeholderTextColor="#94A3B8"
-            value={name}
-            onChangeText={setName}
+            value={form.name}
+            onChangeText={(name) => setForm({ ...form, name })}
             autoCapitalize="words"
           />
 
           <Text className="mb-1 mt-3 text-xs text-slate-400">CRM</Text>
           <TextInput
-            className={INPUT_CLASS}
+            className={INPUT}
             placeholder="123456SP"
             placeholderTextColor="#94A3B8"
-            value={crm}
-            onChangeText={setCrm}
+            value={form.crm}
+            onChangeText={(crm) => setForm({ ...form, crm })}
             autoCapitalize="characters"
           />
 
-          <Text className="mb-1 mt-3 text-xs text-slate-400">
-            Telefone (opcional)
-          </Text>
+          <Text className="mb-1 mt-3 text-xs text-slate-400">Telefone (opcional)</Text>
           <MaskInput
-            className={INPUT_CLASS}
+            className={INPUT}
             placeholder="(11) 98765-4321"
             placeholderTextColor="#94A3B8"
-            value={phone}
+            value={form.phone}
             mask={Masks.BRL_PHONE}
-            onChangeText={(_masked, unmasked) => setPhone(unmasked)}
+            onChangeText={(_masked, phone) => setForm({ ...form, phone })}
             keyboardType="phone-pad"
-            maxLength={15}
           />
         </View>
 
         <View className="mb-4 rounded-2xl border border-slate-200 bg-white p-4">
-          <Text className="mb-1 text-base font-bold text-slate-800">
-            Especialidades
-          </Text>
-          <Text className="mb-3 text-xs text-slate-400">
-            Selecione uma ou mais.
-          </Text>
+          <Text className="mb-1 text-base font-bold text-slate-800">Especialidades</Text>
+          <Text className="mb-3 text-xs text-slate-400">Selecione uma ou mais.</Text>
 
           <View className="flex-row flex-wrap">
-            {specialties.map((specialty) => {
-              const selected = selectedIds.includes(specialty.id);
-              return (
-                <Pressable
-                  key={specialty.id}
-                  onPress={() => toggleSpecialty(specialty.id)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: selected }}
-                  className={`mb-2 mr-2 flex-row items-center rounded-lg border px-3 py-2 ${
-                    selected
-                      ? "border-[#2F80ED] bg-[#2F80ED]"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  {selected ? (
-                    <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                  ) : null}
-                  <Text
-                    className={`text-sm font-bold ${
-                      selected ? "ml-1 text-white" : "text-slate-600"
-                    }`}
-                  >
-                    {specialty.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            {specialties.map((specialty) => (
+              <Chip
+                key={specialty.id}
+                label={specialty.name}
+                selected={form.specialtyIds.includes(specialty.id)}
+                onPress={() => toggleSpecialty(specialty.id)}
+                check
+              />
+            ))}
           </View>
 
           <View className="mt-1 flex-row items-center">
@@ -399,18 +239,18 @@ export default function MedicoFormScreen() {
               placeholderTextColor="#94A3B8"
               value={newSpecialty}
               onChangeText={setNewSpecialty}
-              onSubmitEditing={() => void addSpecialty()}
+              onSubmitEditing={addSpecialty}
               returnKeyType="done"
             />
             <Pressable
-              onPress={() => void addSpecialty()}
-              disabled={isAddingSpecialty || !newSpecialty.trim()}
-              className={`h-10 w-10 items-center justify-center rounded-xl bg-[#2F80ED] ${
-                !newSpecialty.trim() ? "opacity-40" : ""
-              }`}
+              onPress={addSpecialty}
+              disabled={addingSpecialty || !newSpecialty.trim()}
               accessibilityLabel="Adicionar especialidade"
+              className={`h-10 w-10 items-center justify-center rounded-xl bg-[#2F80ED] ${
+                newSpecialty.trim() ? "" : "opacity-40"
+              }`}
             >
-              {isAddingSpecialty ? (
+              {addingSpecialty ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Ionicons name="add" size={20} color="#FFFFFF" />
@@ -422,42 +262,27 @@ export default function MedicoFormScreen() {
         {isEditing ? (
           <View className="mb-4 flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white p-4">
             <View className="flex-1 pr-3">
-              <Text className="text-base font-bold text-slate-800">
-                Médico ativo
-              </Text>
+              <Text className="text-base font-bold text-slate-800">Médico ativo</Text>
               <Text className="text-xs text-slate-400">
                 Médicos inativos ficam indisponíveis para atendimento.
               </Text>
             </View>
             <Switch
-              value={active}
-              onValueChange={setActive}
+              value={form.active}
+              onValueChange={(active) => setForm({ ...form, active })}
               trackColor={{ true: "#2F80ED" }}
             />
           </View>
         ) : null}
 
-        <Pressable
-          onPress={() => void handleSave()}
-          disabled={isSaving}
-          accessibilityState={{ disabled: isSaving, busy: isSaving }}
-          className={`mb-3 h-12 flex-row items-center justify-center rounded-xl bg-[#2F80ED] ${
-            isSaving ? "opacity-70" : ""
-          }`}
-        >
-          {isSaving ? <ActivityIndicator color="#FFFFFF" /> : null}
-          <Text className={`text-base font-bold text-white ${isSaving ? "ml-2" : ""}`}>
-            {isSaving ? "Salvando..." : isEditing ? "Salvar alterações" : "Cadastrar médico"}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => navigation.goBack()}
-          disabled={isSaving}
-          className="h-11 items-center justify-center rounded-xl border border-slate-200 bg-white"
-        >
-          <Text className="text-sm font-bold text-slate-600">Cancelar</Text>
-        </Pressable>
+        <Button
+          label={isEditing ? "Salvar alterações" : "Cadastrar médico"}
+          onPress={save}
+          loading={saving}
+          loadingLabel="Salvando..."
+          className="mb-3"
+        />
+        <Button variant="outline" label="Cancelar" onPress={() => navigation.goBack()} disabled={saving} />
       </ScrollView>
     </SafeAreaView>
   );
