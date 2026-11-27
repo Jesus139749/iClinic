@@ -218,13 +218,14 @@ export default function DetalhesClinicaScreen({ route, navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* Botão inferior: comportamento mantido */}
+      {/* Inicia o fluxo de agendamento com a clínica já selecionada. */}
       <View className="border-t border-slate-200 bg-white px-5 py-3">
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ disabled: true }}
-          disabled
-          className="items-center rounded-xl bg-[#2F80ED] py-3.5 opacity-60"
+          onPress={() =>
+            navigation.navigate("EscolherEspecialidade", { clinicaId })
+          }
+          className="items-center rounded-xl bg-[#2F80ED] py-3.5"
         >
           <Text className="text-base font-bold text-white">
             Agendar Consulta
