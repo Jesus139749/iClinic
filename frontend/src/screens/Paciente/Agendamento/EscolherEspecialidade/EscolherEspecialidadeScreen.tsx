@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Loading } from "../../../../components/Feedback";
 import { useLoad } from "../../../../hooks/useLoad";
@@ -70,11 +70,7 @@ export default function EscolherEspecialidadeScreen({ route, navigation }: Selec
   function handleContinue() {
     if (!selectedSpecialty) return;
 
-    // A escolha de médico (rota "EscolherMedico") ainda não foi implementada.
-    Alert.alert(
-      "Próxima etapa indisponível",
-      "A escolha de médico ainda não foi implementada. Sua clínica e especialidade selecionadas estão prontas para essa etapa.",
-    );
+    navigation.navigate("EscolherMedico", { clinicId, specialty: selectedSpecialty });
   }
 
   return (

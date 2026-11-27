@@ -3,6 +3,7 @@ import { Header } from "../../../components/Header";
 import type { AppointmentStackParamList } from "../../../routes/navigationTypes";
 import ClinicDetailsScreen from "./DetalhesClinica/DetalhesClinicaScreen";
 import EscolherEspecialidadeScreen from "./EscolherEspecialidade/EscolherEspecialidadeScreen";
+import EscolherMedicoScreen from "./EscolherMedico/EscolherMedicoScreen";
 
 const Stack = createNativeStackNavigator<AppointmentStackParamList>();
 
@@ -18,6 +19,11 @@ export default function AppointmentStackRoutes() {
         name="EscolherEspecialidade"
         component={EscolherEspecialidadeScreen}
         options={{ title: "Escolher especialidade" }}
+      />
+      <Stack.Screen
+        name="EscolherMedico"
+        component={EscolherMedicoScreen}
+        options={{ title: "Escolher médico" }}
       />
     </Stack.Navigator>
   );
