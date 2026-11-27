@@ -2,6 +2,8 @@ import type { NavigatorScreenParams } from "@react-navigation/native";
 
 export type AppointmentStackParamList = {
   DetalhesClinica: { clinicId: number };
+  EscolherEspecialidade: { clinicId: number };
+  EscolherMedico: { clinicId: number; specialty: string };
 };
 
 export type RootStackParamList = {

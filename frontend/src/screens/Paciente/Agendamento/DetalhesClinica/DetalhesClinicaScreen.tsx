@@ -123,9 +123,12 @@ export default function DetalhesClinicaScreen({ route, navigation }: ClinicDetai
         </View>
       </ScrollView>
 
-      {/* Agendamento ainda não implementado no backend. */}
+      {/* Inicia o fluxo de agendamento com a clínica já selecionada. */}
       <View className="border-t border-slate-200 bg-white px-5 py-3">
-        <Pressable disabled className="items-center rounded-xl bg-[#2F80ED] py-3.5 opacity-60">
+        <Pressable
+          onPress={() => navigation.navigate("EscolherEspecialidade", { clinicId })}
+          className="items-center rounded-xl bg-[#2F80ED] py-3.5"
+        >
           <Text className="text-base font-bold text-white">Agendar Consulta</Text>
         </Pressable>
       </View>
