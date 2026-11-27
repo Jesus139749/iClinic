@@ -1,70 +1,20 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import DashboardPacienteScreen from '../Dashboard/DashboardPacienteScreen';
-import ConsultasScreen from '../Consultas/ConsultasScreen';
-import FavoritosScreen from '../Buscar/BuscarScreen';
-import PerfilScreen from '../Perfil/PerfilScreen';
-import Ionicons from '@expo/vector-icons/build/Ionicons';
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import type { PatientTabParamList } from "../../../routes/navigationTypes";
+import { tabIcon } from "../../../routes/tabIcon";
+import SearchClinicsScreen from "../Buscar/BuscarScreen";
+import PatientAppointmentsScreen from "../Consultas/ConsultasScreen";
+import PatientDashboardScreen from "../Dashboard/DashboardPacienteScreen";
+import PatientProfileScreen from "../Perfil/PerfilScreen";
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<PatientTabParamList>();
 
-export default function PacienteTabRoutes() {
-    return (
-        <Tab.Navigator screenOptions={{ headerShown: false }}>
-            <Tab.Screen
-                name="Inicio"
-                component={DashboardPacienteScreen}
-                options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <Ionicons
-                            name={focused ? 'home' : 'home-outline'}
-                            size={size}
-                            color={color}
-                        />
-                    )
-                }}
-            />
-
-            <Tab.Screen
-                name="Consultas"
-                component={ConsultasScreen}
-                options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <Ionicons
-                            name={focused ? 'calendar' : 'calendar-outline'}
-                            size={size}
-                            color={color}
-                        />
-                    )
-                }}
-            />
-
-            <Tab.Screen
-                name="Buscar"
-                component={FavoritosScreen}
-                options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <Ionicons
-                            name={focused ? 'search' : 'search-outline'}
-                            size={size}
-                            color={color}
-                        />
-                    )
-                }}
-            />
-
-            <Tab.Screen
-                name="Perfil"
-                component={PerfilScreen}
-                options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <Ionicons
-                            name={focused ? 'person' : 'person-outline'}
-                            size={size}
-                            color={color}
-                        />
-                    )
-                }}
-            />
-        </Tab.Navigator>
-    );
+export default function PatientTabRoutes() {
+  return (
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Screen name="Inicio" component={PatientDashboardScreen} options={tabIcon("home")} />
+      <Tab.Screen name="Consultas" component={PatientAppointmentsScreen} options={tabIcon("calendar")} />
+      <Tab.Screen name="Buscar" component={SearchClinicsScreen} options={tabIcon("search")} />
+      <Tab.Screen name="Perfil" component={PatientProfileScreen} options={tabIcon("person")} />
+    </Tab.Navigator>
+  );
 }

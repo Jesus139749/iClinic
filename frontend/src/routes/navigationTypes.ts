@@ -1,9 +1,9 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
 
-export type AgendamentoStackParamList = {
-  DetalhesClinica: { clinicaId: number };
-  EscolherEspecialidade: { clinicaId: number };
-  EscolherMedico: { clinicaId: number; especialidade: string };
+export type AppointmentStackParamList = {
+  DetalhesClinica: { clinicId: number };
+  EscolherEspecialidade: { clinicId: number };
+  EscolherMedico: { clinicId: number; specialty: string };
 };
 
 export type RootStackParamList = {
@@ -14,11 +14,11 @@ export type RootStackParamList = {
   DashboardPaciente: undefined;
   DashboardClinica: undefined;
   CadastroMedico: undefined;
-  EditarMedico: undefined;
-  Agendamento: NavigatorScreenParams<AgendamentoStackParamList>;
+  EditarMedico: { doctorId: number };
+  Agendamento: NavigatorScreenParams<AppointmentStackParamList>;
 };
 
-export type PacienteTabParamList = {
+export type PatientTabParamList = {
   Inicio: undefined;
   Consultas: undefined;
   Buscar: undefined;

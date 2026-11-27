@@ -1,23 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-  type NavigationProp,
-  type ParamListBase,
-  type RouteProp,
-} from "@react-navigation/native";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useNavigation, useRoute, type NavigationProp, type ParamListBase } from "@react-navigation/native";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Chip } from "../../../components/Chip";
+import { ErrorBox, Loading, SuccessBanner } from "../../../components/Feedback";
+import { useLoad } from "../../../hooks/useLoad";
 import { getRequestErrorMessage } from "../../../services/apiClient";
 import {
   createSpecialty,
@@ -28,148 +16,103 @@ import {
   type Doctor,
   type SpecialtyWithCount,
 } from "../../../services/doctorService";
-import { EspecialidadesCard } from "./components/EspecialidadesCard";
-import { MedicoCard } from "./components/MedicoCard";
+import { normalize } from "../../../utils/format";
+import { SpecialtiesCard } from "./components/EspecialidadesCard";
+import { DoctorCard } from "./components/MedicoCard";
+import type { DoctorFilters } from "./interfaces/DoctorFilters";
+import type { DoctorsRoute } from "./interfaces/DoctorsRoute";
+import type { StatusOption } from "./interfaces/StatusOption";
 
-type StatusFilter = "todos" | "ativos" | "inativos";
+function filterDoctors(doctors: Doctor[], { search, status, specialtyId }: DoctorFilters): Doctor[] {
+  const term = normalize(search.trim());
 
-type MedicosRoute = RouteProp<{ Médicos: { mensagem?: string } | undefined }>;
-
-function normalize(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+  return doctors.filter((doctor) => {
+    if (status === "ativos" && !doctor.active) return false;
+    if (status === "inativos" && doctor.active) return false;
+    if (specialtyId !== null && !doctor.specialties.some((s) => s.id === specialtyId)) {
+      return false;
+    }
+    const texts = [doctor.name, doctor.crm, ...doctor.specialties.map((s) => s.name)];
+    return !term || texts.some((text) => normalize(text).includes(term));
+  });
 }
 
 export const MedicosScreen = () => {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
-  const route = useRoute<MedicosRoute>();
+  const incomingMessage = useRoute<DoctorsRoute>().params?.message;
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specialties, setSpecialties] = useState<SpecialtyWithCount[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [loadAttempt, setLoadAttempt] = useState(0);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
-
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("todos");
+  const [filters, setFilters] = useState<DoctorFilters>({ search: "", status: "todos", specialtyId: null });
   const [showFilters, setShowFilters] = useState(false);
-  const [specialtyFilter, setSpecialtyFilter] = useState<number | null>(null);
+  const [reactivatingId, setReactivatingId] = useState<number | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
 
-  // Recarrega ao voltar do formulário e ao tentar novamente.
-  useFocusEffect(
-    useCallback(() => {
-      let isCurrent = true;
-
-      async function load() {
-        try {
-          const [loadedDoctors, loadedSpecialties] = await Promise.all([
-            listDoctors(),
-            listSpecialties(),
-          ]);
-          if (!isCurrent) return;
-          setDoctors(loadedDoctors);
-          setSpecialties(loadedSpecialties);
-          setLoadError(null);
-        } catch (error) {
-          if (isCurrent) setLoadError(getRequestErrorMessage(error));
-        } finally {
-          if (isCurrent) setIsLoading(false);
-        }
-      }
-
-      void load();
-
-      return () => {
-        isCurrent = false;
-      };
-    }, [loadAttempt]),
+  // Recarrega ao voltar do formulário.
+  const { loading, error, reload } = useLoad(
+    async () => {
+      const [doctorList, specialtyList] = await Promise.all([listDoctors(), listSpecialties()]);
+      setDoctors(doctorList);
+      setSpecialties(specialtyList);
+    },
+    [],
+    { onFocus: true },
   );
 
   // Mensagem de sucesso enviada pelo formulário.
-  const incomingMessage = route.params?.mensagem;
   useEffect(() => {
     if (!incomingMessage) return;
-
     setBanner(incomingMessage);
-    navigation.setParams({ mensagem: undefined });
-    const timeout = setTimeout(() => setBanner(null), 4000);
-    return () => clearTimeout(timeout);
+    navigation.setParams({ message: undefined });
   }, [incomingMessage, navigation]);
 
-  const counts = useMemo(
-    () => ({
-      todos: doctors.length,
-      ativos: doctors.filter((doctor) => doctor.active).length,
-      inativos: doctors.filter((doctor) => !doctor.active).length,
-    }),
-    [doctors],
-  );
+  // O banner some sozinho depois de 4 segundos.
+  useEffect(() => {
+    if (!banner) return;
+    const timeout = setTimeout(() => setBanner(null), 4000);
+    return () => clearTimeout(timeout);
+  }, [banner]);
 
-  const visibleDoctors = useMemo(() => {
-    const term = normalize(search.trim());
-
-    return doctors.filter((doctor) => {
-      if (status === "ativos" && !doctor.active) return false;
-      if (status === "inativos" && doctor.active) return false;
-      if (
-        specialtyFilter !== null &&
-        !doctor.specialties.some((item) => item.id === specialtyFilter)
-      ) {
-        return false;
-      }
-      if (!term) return true;
-
-      return [doctor.name, doctor.crm, ...doctor.specialties.map((s) => s.name)]
-        .map(normalize)
-        .some((value) => value.includes(term));
-    });
-  }, [doctors, search, status, specialtyFilter]);
+  const visibleDoctors = filterDoctors(doctors, filters);
+  const activeCount = doctors.filter((d) => d.active).length;
+  const statusOptions: StatusOption[] = [
+    { status: "todos", label: `Todos (${doctors.length})` },
+    { status: "ativos", label: `Ativos (${activeCount})` },
+    { status: "inativos", label: `Inativos (${doctors.length - activeCount})` },
+  ];
 
   function openForm(doctor?: Doctor) {
-    const parent = navigation.getParent();
-    if (doctor) {
-      parent?.navigate("EditarMedico", { medicoId: doctor.id });
-    } else {
-      parent?.navigate("CadastroMedico");
-    }
+    const root = navigation.getParent();
+    if (doctor) root?.navigate("EditarMedico", { doctorId: doctor.id });
+    else root?.navigate("CadastroMedico");
   }
 
   async function reactivate(doctor: Doctor) {
-    setUpdatingId(doctor.id);
+    setReactivatingId(doctor.id);
     try {
       const updated = await updateDoctor(doctor.id, { active: true });
-      setDoctors((current) =>
-        current.map((item) => (item.id === updated.id ? updated : item)),
-      );
+      setDoctors((current) => current.map((d) => (d.id === updated.id ? updated : d)));
       setBanner(`${updated.name} reativado com sucesso!`);
-    } catch (error) {
-      Alert.alert("Não foi possível reativar", getRequestErrorMessage(error));
+    } catch (e) {
+      Alert.alert("Não foi possível reativar", getRequestErrorMessage(e));
     } finally {
-      setUpdatingId(null);
+      setReactivatingId(null);
     }
   }
 
   async function addSpecialty(name: string): Promise<boolean> {
     try {
       const created = await createSpecialty(name);
-      setSpecialties((current) =>
-        [...current, created].sort((a, b) => a.name.localeCompare(b.name)),
-      );
+      setSpecialties((current) => [...current, created].sort((a, b) => a.name.localeCompare(b.name)));
       return true;
-    } catch (error) {
-      Alert.alert(
-        "Não foi possível adicionar a especialidade",
-        getRequestErrorMessage(error),
-      );
+    } catch (e) {
+      Alert.alert("Não foi possível adicionar a especialidade", getRequestErrorMessage(e));
       return false;
     }
   }
 
-  function confirmRemoveSpecialty(specialty: SpecialtyWithCount) {
+  function removeSpecialty(specialty: SpecialtyWithCount) {
+    // Regra: só pode remover especialidade sem médicos vinculados.
     if (specialty.doctorsCount > 0) {
       Alert.alert(
         "Especialidade em uso",
@@ -186,26 +129,15 @@ export const MedicosScreen = () => {
         onPress: async () => {
           try {
             await deleteSpecialty(specialty.id);
-            setSpecialties((current) =>
-              current.filter((item) => item.id !== specialty.id),
-            );
-            if (specialtyFilter === specialty.id) setSpecialtyFilter(null);
-          } catch (error) {
-            Alert.alert(
-              "Não foi possível remover",
-              getRequestErrorMessage(error),
-            );
+            setSpecialties((current) => current.filter((s) => s.id !== specialty.id));
+            setFilters((f) => (f.specialtyId === specialty.id ? { ...f, specialtyId: null } : f));
+          } catch (e) {
+            Alert.alert("Não foi possível remover", getRequestErrorMessage(e));
           }
         },
       },
     ]);
   }
-
-  const chips: { key: StatusFilter; label: string }[] = [
-    { key: "todos", label: `Todos (${counts.todos})` },
-    { key: "ativos", label: `Ativos (${counts.ativos})` },
-    { key: "inativos", label: `Inativos (${counts.inativos})` },
-  ];
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={[]}>
@@ -215,17 +147,12 @@ export const MedicosScreen = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View className="mb-4 flex-row items-center justify-between">
-          <Text className="flex-1 pr-3 text-xl font-bold text-slate-800">
-            Médicos e{"\n"}Especialidades
-          </Text>
+          <Text className="flex-1 pr-3 text-xl font-bold text-slate-800">Médicos e Especialidades</Text>
           <Pressable
             onPress={() => openForm()}
             className="items-center justify-center rounded-xl bg-[#2F80ED] px-4 py-3"
-            accessibilityRole="button"
           >
-            <Text className="text-center text-sm font-bold text-white">
-              Novo{"\n"}Médico
-            </Text>
+            <Text className="text-center text-sm font-bold text-white">Novo Médico</Text>
           </Pressable>
         </View>
 
@@ -236,21 +163,19 @@ export const MedicosScreen = () => {
               className="ml-2 flex-1 p-0 text-sm text-slate-800"
               placeholder="Buscar médico..."
               placeholderTextColor="#94A3B8"
-              value={search}
-              onChangeText={setSearch}
+              value={filters.search}
+              onChangeText={(search) => setFilters({ ...filters, search })}
               autoCapitalize="none"
               returnKeyType="search"
             />
           </View>
           <Pressable
-            onPress={() => setShowFilters((current) => !current)}
+            onPress={() => setShowFilters(!showFilters)}
             className={`h-[38px] flex-row items-center rounded-xl border px-3 ${
-              showFilters || specialtyFilter !== null
+              showFilters || filters.specialtyId !== null
                 ? "border-blue-200 bg-blue-50"
                 : "border-slate-200 bg-white"
             }`}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showFilters }}
           >
             <Ionicons name="funnel" size={14} color="#2F80ED" />
             <Text className="ml-2 text-sm font-bold text-[#2F80ED]">Filtrar</Text>
@@ -259,37 +184,20 @@ export const MedicosScreen = () => {
 
         {showFilters ? (
           <View className="mb-3 rounded-2xl border border-slate-200 bg-white p-3">
-            <Text className="mb-2 text-xs text-slate-400">
-              Filtrar por especialidade
-            </Text>
+            <Text className="mb-2 text-xs text-slate-400">Filtrar por especialidade</Text>
             {specialties.length === 0 ? (
-              <Text className="text-sm text-slate-400">
-                Nenhuma especialidade cadastrada.
-              </Text>
+              <Text className="text-sm text-slate-400">Nenhuma especialidade cadastrada.</Text>
             ) : (
               <View className="flex-row flex-wrap">
                 {specialties.map((specialty) => {
-                  const selected = specialtyFilter === specialty.id;
+                  const selected = filters.specialtyId === specialty.id;
                   return (
-                    <Pressable
+                    <Chip
                       key={specialty.id}
-                      onPress={() =>
-                        setSpecialtyFilter(selected ? null : specialty.id)
-                      }
-                      className={`mb-2 mr-2 rounded-lg border px-3 py-1.5 ${
-                        selected
-                          ? "border-[#2F80ED] bg-[#2F80ED]"
-                          : "border-slate-200 bg-white"
-                      }`}
-                    >
-                      <Text
-                        className={`text-xs font-bold ${
-                          selected ? "text-white" : "text-slate-600"
-                        }`}
-                      >
-                        {specialty.name}
-                      </Text>
-                    </Pressable>
+                      label={specialty.name}
+                      selected={selected}
+                      onPress={() => setFilters({ ...filters, specialtyId: selected ? null : specialty.id })}
+                    />
                   );
                 })}
               </View>
@@ -297,72 +205,24 @@ export const MedicosScreen = () => {
           </View>
         ) : null}
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-4 flex-grow-0"
-          keyboardShouldPersistTaps="handled"
-        >
-          {chips.map((chip) => {
-            const selected = status === chip.key;
-            return (
-              <Pressable
-                key={chip.key}
-                onPress={() => setStatus(chip.key)}
-                className={`mr-2 rounded-full border px-4 py-2 ${
-                  selected
-                    ? "border-[#2F80ED] bg-[#2F80ED]"
-                    : "border-slate-200 bg-white"
-                }`}
-                accessibilityState={{ selected }}
-              >
-                <Text
-                  className={`text-xs font-bold ${
-                    selected ? "text-white" : "text-slate-600"
-                  }`}
-                >
-                  {chip.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <View className="mb-2 flex-row flex-wrap">
+          {statusOptions.map((option) => (
+            <Chip
+              key={option.status}
+              label={option.label}
+              selected={filters.status === option.status}
+              onPress={() => setFilters({ ...filters, status: option.status })}
+              rounded
+            />
+          ))}
+        </View>
 
-        {banner ? (
-          <View
-            className="mb-4 flex-row items-center rounded-lg border border-green-300 bg-green-50 px-3 py-3"
-            accessibilityRole="alert"
-          >
-            <Ionicons name="checkmark-circle-outline" size={16} color="#16a34a" />
-            <Text className="ml-2 flex-1 text-sm text-green-700">{banner}</Text>
-            <Pressable onPress={() => setBanner(null)} hitSlop={8}>
-              <Ionicons name="close" size={16} color="#16a34a" />
-            </Pressable>
-          </View>
-        ) : null}
+        {banner ? <SuccessBanner message={banner} onClose={() => setBanner(null)} /> : null}
 
-        {isLoading ? (
-          <View className="items-center py-10">
-            <ActivityIndicator color="#2F80ED" />
-          </View>
-        ) : loadError ? (
-          <View
-            className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3"
-            accessibilityRole="alert"
-          >
-            <Text className="text-sm text-red-700">{loadError}</Text>
-            <Pressable
-              onPress={() => {
-                setIsLoading(true);
-                setLoadAttempt((attempt) => attempt + 1);
-              }}
-              className="mt-3 h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50"
-            >
-              <Text className="text-sm font-bold text-blue-600">
-                Tentar novamente
-              </Text>
-            </Pressable>
-          </View>
+        {loading ? (
+          <Loading />
+        ) : error ? (
+          <ErrorBox message={error} onRetry={reload} />
         ) : (
           <>
             {visibleDoctors.length === 0 ? (
@@ -376,21 +236,17 @@ export const MedicosScreen = () => {
               </View>
             ) : (
               visibleDoctors.map((doctor) => (
-                <MedicoCard
+                <DoctorCard
                   key={doctor.id}
                   doctor={doctor}
-                  isUpdating={updatingId === doctor.id}
+                  isUpdating={reactivatingId === doctor.id}
                   onEdit={() => openForm(doctor)}
-                  onReactivate={() => void reactivate(doctor)}
+                  onReactivate={() => reactivate(doctor)}
                 />
               ))
             )}
 
-            <EspecialidadesCard
-              specialties={specialties}
-              onAdd={addSpecialty}
-              onRemove={confirmRemoveSpecialty}
-            />
+            <SpecialtiesCard specialties={specialties} onAdd={addSpecialty} onRemove={removeSpecialty} />
           </>
         )}
       </ScrollView>
