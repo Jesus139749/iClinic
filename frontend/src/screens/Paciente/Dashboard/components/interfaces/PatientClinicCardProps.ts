@@ -1,10 +1,6 @@
+import type { ClinicListItem } from "../../../../../services/clinicSearchService";
+
 export interface PatientClinicCardProps {
-  name: string;
-  imageUrl: string;
-  distanceKm: number;
-  hours: string;
-  rating: number;
-  specialties: string[];
-  nextAvailable: string;
-  actionLabel: "Ver Detalhes" | "Agendar";
+  clinic: ClinicListItem;
+  onPress: () => void;
 }
